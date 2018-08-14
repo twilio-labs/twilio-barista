@@ -1,5 +1,9 @@
 {
-  "extends": ["airbnb-base", "plugin:prettier/recommended"],
+  "extends": [
+    "airbnb-base",
+    "plugin:jest/recommended",
+    "plugin:prettier/recommended"
+  ],
   "plugins": ["jsx-a11y", "react"],
   "rules": {
     "react/jsx-no-bind": [2, { "ignoreRefs": true }],
