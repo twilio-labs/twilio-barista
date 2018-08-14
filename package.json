@@ -13,27 +13,22 @@
   "author": "Dominik Kundel <dominik.kundel@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start":
-      "if-env NODE_ENV=production && npm run start:prod || npm run start:dev",
+    "start": "if-env NODE_ENV=production && npm run start:prod || npm run start:dev",
     "start:prod": "node .",
     "start:dev": "node-env-run . -f  -- --inspect | pino-colada",
     "lint": "npm-run-all lint:*",
     "lint:api": "eslint server",
     "lint:preact": "eslint client",
     "pretest": "npm run lint",
-    "test": "preact test",
-    "build:preact":
-      "preact build --src client --dest client-dist --no-prerender",
+    "test": "jest",
+    "build:preact": "preact build --src client --dest client-dist --no-prerender",
     "build": "npm-run-all -p build:*",
-    "serve":
-      "stmux -w always -m beep,system -- [ [ \"npm run serve:preact\" ] : [ \"npm run serve:api\" ] ]",
+    "serve": "stmux -w always -m beep,system -- [ [ \"npm run serve:preact\" ] : [ \"npm run serve:api\" ] ]",
     "serve:preact": "npm run build:preact && preact serve --dir client-dist",
     "serve:api": "npm run start:dev",
-    "dev":
-      "stmux -w always -m beep,system -- [ [ \"npm run dev:preact\" ] : [ \"npm run dev:api\" ] ]",
+    "dev": "stmux -w always -m beep,system -- [ [ \"npm run dev:preact\" ] : [ \"npm run dev:api\" ] ]",
     "dev:preact": "preact watch --src client",
-    "dev:api":
-      "nodemon --watch shared --watch server --exec \"npm run start:dev\"",
+    "dev:api": "nodemon --watch shared --watch server --exec \"npm run start:dev\"",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
   },
@@ -42,9 +37,12 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jest": "^21.21.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-prettier": "^2.6.0",
     "eslint-plugin-react": "^7.7.0",
+    "jest": "^23.5.0",
+    "jest-express": "^1.6.1",
     "less": "^3.0.1",
     "less-loader": "^4.1.0",
     "node-env-run": "^3.0.2",
