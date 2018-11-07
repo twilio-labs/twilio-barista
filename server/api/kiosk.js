@@ -5,13 +5,16 @@ const emojiFlags = require('emoji-flags');
 async function handler(req, res) {
   const { eventId } = req.query;
   const { visibleNumbers, mode } = config(eventId);
-  const filteredNumbers = visibleNumbers.split(',').map(num => num.trim());
+  const filteredNumbers = visibleNumbers
+    .split(',')
+    .map(num => num.trim())
+    .filter(num => !!num);
 
   try {
     const phoneNumbers = (await Promise.all(
       filteredNumbers.map(async number => {
         try {
-          const sanitizedNumber = number.replace(/[^(\d|\w)]/g, '');
+          const sanitizedNumber = number.replace(/[^(\d|\w|+)]/g, '');
           const { countryCode } = await restClient.lookups
             .phoneNumbers(sanitizedNumber)
             .fetch();

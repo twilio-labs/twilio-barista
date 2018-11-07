@@ -6,11 +6,12 @@ const pinoMiddleware = require('express-pino-logger')({ logger: log });
 const { loadConnectedPhoneNumbers } = require('./api/twilio');
 const { loadConfig, updateGlobalConfigEntry } = require('./data/config');
 const { forceSsl } = require('./utils/request');
+const apiRouter = require('./api');
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_CODE_PATH = path.resolve(__dirname, '..', 'client-dist');
 
-(async function() {
+(async function run() {
   const app = express();
 
   if (process.env.NODE_ENV === 'production') {
@@ -20,9 +21,9 @@ const CLIENT_CODE_PATH = path.resolve(__dirname, '..', 'client-dist');
   app.use(pinoMiddleware);
   app.use(express.static(CLIENT_CODE_PATH));
 
-  app.use('/api', require('./api'));
+  app.use('/api', apiRouter);
 
-  app.get('*', (req, res, next) => {
+  app.get('*', (req, res) => {
     res.sendFile(path.join(CLIENT_CODE_PATH, 'index.html'));
   });
 
