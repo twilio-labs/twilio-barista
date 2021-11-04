@@ -51,7 +51,7 @@
     "preact-cli": "^2.2.1",
     "preact-cli-plugin-fast-async": "^1.0.1",
     "prettier": "^1.11.1",
-    "stmux": "^1.8.1"
+    "stmux": "^1.8.2"
   },
   "dependencies": {
     "@material/select": "^0.3.9",
