@@ -44,11 +44,11 @@
     "eslint-plugin-react": "^7.7.0",
     "less": "^3.9.0",
     "less-loader": "^4.1.0",
-    "node-env-run": "^3.0.2",
+    "node-env-run": "^4.0.0",
     "nodemon": "^1.18.9",
     "npm-run-all": "^4.0.2",
     "pino-colada": "^1.4.0",
-    "preact-cli": "^2.2.1",
+    "preact-cli": "^3.3.4",
     "preact-cli-plugin-fast-async": "^1.0.1",
     "prettier": "^1.11.1",
     "stmux": "^1.8.1"
@@ -86,7 +86,7 @@
     "snyk": "^1.520.0",
     "twilio": "^3.26.1",
     "twilio-common": "^0.1.6",
-    "twilio-sync": "0.5.8",
+    "twilio-sync": "0.8.0",
     "url-join": "^2.0.2"
   },
   "snyk": true
