@@ -48,7 +48,7 @@
     "nodemon": "^1.18.9",
     "npm-run-all": "^4.0.2",
     "pino-colada": "^1.4.0",
-    "preact-cli": "^2.2.1",
+    "preact-cli": "^3.0.0",
     "preact-cli-plugin-fast-async": "^1.0.1",
     "prettier": "^1.11.1",
     "stmux": "^1.8.1"
@@ -84,7 +84,7 @@
     "rollbar": "^2.5.1",
     "sentry": "^0.1.2",
     "snyk": "^1.520.0",
-    "twilio": "^3.26.1",
+    "twilio": "^4.0.0",
     "twilio-common": "^0.1.6",
     "twilio-sync": "0.5.8",
     "url-join": "^2.0.2"
