@@ -3,7 +3,7 @@ const path = require('path');
 const log = require('pino')();
 const pinoMiddleware = require('express-pino-logger')({ logger: log });
 const Sentry = require('@sentry/node');
-const { loadConnectedPhoneNumbers } = require('./api/twilio');
+// const { loadConnectedPhoneNumbers } = require('./api/twilio');
 const { loadConfig, updateGlobalConfigEntry } = require('./data/config');
 const { forceSsl } = require('./utils/request');
 
@@ -33,13 +33,13 @@ Sentry.init({
   try {
     log.info('Load config from Twilio Sync');
     await loadConfig();
-    log.info('Retrieve available phone numbers');
-    const connectedPhoneNumbers = await loadConnectedPhoneNumbers();
-    log.info('Write available phone numbers into configuration');
-    await updateGlobalConfigEntry(
-      'connectedPhoneNumbers',
-      connectedPhoneNumbers
-    );
+    // log.info('Retrieve available phone numbers'); TODO change to conversations service later
+    // const connectedPhoneNumbers = await loadConnectedPhoneNumbers();
+    // log.info('Write available phone numbers into configuration');
+    // await updateGlobalConfigEntry(
+    //   'connectedPhoneNumbers',
+    //   connectedPhoneNumbers
+    // );
     app.listen(PORT, () => {
       log.info(`Server is listening on port ${PORT}`);
     });

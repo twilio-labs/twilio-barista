@@ -41,7 +41,7 @@ export default class Kiosk extends Component {
         <p class={style.hr}>Skip the Queue!</p>
         <div class={style.centerContent}>
           <p>{kiosk.tagLine}</p>
-          <p>Send your order via SMS to:</p>
+          <p>Send your order via WhatsApp to:</p>
           <div class={style.phoneNumbers}>
             {this.state.kioskInfo.phoneNumbers.slice(0, 4).map(num => (
               <p>

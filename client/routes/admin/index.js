@@ -52,7 +52,7 @@ export default class Orders extends Component {
           </Tabs.Tab>
           <Tabs.Tab href="#events">Events</Tabs.Tab>
           <Tabs.Tab href="#metrics">Metrics</Tabs.Tab>
-          <Tabs.Tab href="#messages">Messages</Tabs.Tab>
+          {/* <Tabs.Tab href="#messages">Messages</Tabs.Tab> */}
           <Tabs.Tab href="#other">Other</Tabs.Tab>
         </Tabs.TabBar>
         <Tabs.TabPanel id="configuration" active>

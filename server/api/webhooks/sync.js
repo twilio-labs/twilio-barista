@@ -4,7 +4,7 @@ const {
   orderQueueList,
   restClient,
   sendMessage,
-  deregisterOpenOrder,
+  // deregisterOpenOrder,
 } = require('../twilio');
 
 const {
@@ -28,26 +28,26 @@ async function handleOrderStatusChange(requestBody) {
   const customer = await customersMap.syncMapItems(itemData.customer).fetch();
   const indexOfOrder = customer.data.openOrders.indexOf(itemIndex);
   customer.data.openOrders.splice(indexOfOrder, 1);
+  if (itemData.status === 'ready') {
+    customer.data.completedOrders++
+  }
   await customersMap.syncMapItems(customer.key).update({
     data: customer.data,
   });
 
-  let responseMessage;
-  if (itemData.status === 'ready') {
-    responseMessage = getOrderReadyMessage(itemData.product, itemIndex, eventId);
-  } else {
-    responseMessage = getOrderCancelledMessage(itemData.product, itemIndex);
-  }
-  await sendMessage(customer.key, responseMessage);
+  await sendMessage(customer.key, itemData.status === 'ready' ?
+    getOrderReadyMessage(itemData.product, itemIndex, eventId) :
+    getOrderCancelledMessage(itemData.product, itemIndex)
+  );
 
   await orderQueueList(eventId)
     .syncListItems(itemIndex)
     .remove();
-  const newBindingSid = await deregisterOpenOrder(customer.data.bindingSid);
-  const newCustomerData = Object.assign({}, customer.data, {
-    bindingSid: newBindingSid,
-  });
-  await customer.update({ data: newCustomerData });
+  // const newBindingSid = await deregisterOpenOrder(customer.data.bindingSid);
+  // const newCustomerData = Object.assign({}, customer.data, {
+  //   bindingSid: newBindingSid,
+  // });
+  // await customer.update({ data: newCustomerData });
 }
 
 function validEventType(eventType) {

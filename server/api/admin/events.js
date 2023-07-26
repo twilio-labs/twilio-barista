@@ -12,7 +12,6 @@ const {
   orderQueueList,
   allOrdersList,
   customersMap,
-  notifyClient,
 } = require('../twilio');
 const { SYNC_NAMES } = require('../../../shared/consts');
 
@@ -25,13 +24,13 @@ async function handleCreateEventRequest(req, res, next) {
   res.send({ eventId });
 }
 
-async function deleteAllBindingsAndCustomersForEvent(eventId) {
-  function deleteBinding(bindingSid) {
-    return notifyClient
-      .bindings(bindingSid)
-      .remove()
-      .catch(err => true);
-  }
+async function deleteAllBindingsAndCustomersForEvent(eventId) { //TODO need to check what;s needed
+  // function deleteBinding(bindingSid) {
+  //   return notifyClient
+  //     .bindings(bindingSid)
+  //     .remove()
+  //     .catch(err => true);
+  // }
 
   function deleteCustomer(customer) {
     return customer.remove().catch(err => true);
@@ -45,9 +44,9 @@ async function deleteAllBindingsAndCustomersForEvent(eventId) {
     ({ data }) => data.eventId === eventId
   );
 
-  const promisesDeleteBindings = customers.map(({ data }) => {
-    return throttle.add(deleteBinding.bind(this, data.bindingSid));
-  });
+  // const promisesDeleteBindings = customers.map(({ data }) => {
+  //   return throttle.add(deleteBinding.bind(this, data.bindingSid));
+  // });
   const promisesDeleteCustomers = customers.map(customer => {
     return throttle.add(deleteCustomer.bind(this, customer));
   });

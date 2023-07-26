@@ -1,12 +1,8 @@
 import { h, Component } from 'preact';
 import mdl from 'material-design-lite/material';
 import {
-  TextField,
-  Radio,
   Button,
   Card,
-  Chip,
-  Progress,
   CheckBox,
 } from 'preact-mdl';
 
@@ -133,7 +129,7 @@ export default class Other extends Component {
             This will create the necessary sync objects and other things
             necessary for the first setup.
           </ActionCard>
-          <ActionCard
+          {/* <ActionCard
             title="Cancel All Open Orders"
             buttonText="Cancel All Open Orders"
             disabled={true}
@@ -145,7 +141,7 @@ export default class Other extends Component {
             <p>
               <strong>Important:</strong> This moved into the event view
             </p>
-          </ActionCard>
+          </ActionCard> */}
           <ActionCard
             title="Reset Dashboard Stats"
             buttonText="Reset Stats"
@@ -160,7 +156,7 @@ export default class Other extends Component {
               orders and the customer database
             </p>
           </ActionCard>
-          <ActionCard
+          {/* <ActionCard
             title="Acquire New Phone Number"
             buttonText="Acquire Number"
             action={() => this.acquirePhoneNumber()}
@@ -180,7 +176,7 @@ export default class Other extends Component {
             ) : (
               <Progress indeterminate />
             )}
-          </ActionCard>
+          </ActionCard> */}
           <ActionCard
             title="Reset Complete Application"
             buttonText="Reset Entire Application"
@@ -189,7 +185,7 @@ export default class Other extends Component {
           >
             <p>
               This will clear out all open and past orders, reset the
-              configuration to default, delete all Notify bindings and clear the
+              configuration to default, and clear the
               customer map.
             </p>
             <CheckBox

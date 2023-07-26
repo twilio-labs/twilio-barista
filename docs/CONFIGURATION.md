@@ -16,7 +16,7 @@ These values can be changed in the configuration document via the admin interfac
 | ------------------------------------ | ------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `isVisible`                          | `boolean`                 | `false`                                      | If this is set to `true` and more than one event is visible, the user will be prompted for which event they are ordering. |
 | `isOnline`                           | `boolean`                 | `true`                                       | If set to `false` it will return offline messages for incoming messages and don't trigger the classical actions.          |
-| `mode`                               | `'barista' | 'bartender'` | `'barista'`                                  | Allows you to change the appearance of the kiosk and dashboard view.                                                      |
+| `mode`                               | `'barista' | 'bartender' | 'smoothie'` | `'barista'`                                  | Allows you to change the appearance of the kiosk and dashboard view.                                                      |
 | `visibleNumbers`                     | `string[]`                | `[]`                                         | List of phone numbers that should be shown on the dashboard and kiosk view.                                               |
 | `offlineMessage`                     | `string`                  | `''`                                         | Allows to customize the offline message instead of using the default ones.                                                |
 | `availableCoffees`                   | `object`                  | `AVAILABLE_DEFAULT_OPTIONS` in [consts file] | This is a map of coffees available in the system.
@@ -27,6 +27,7 @@ These values can be changed in the configuration document via the admin interfac
 | `spellingMap['Spelling of Coffee']`  | `string`                  |                                              | Maps to the string of a value in `availableCoffees`                                                                       |
 | `repoUrl`                            | `string`                  | `https://github.com/dkundel/twilio-barista`  | The link the repo that should be sent in the response messages                                                            |
 | `expectedOrders`                     | `number`                  | `300`                                        | Arbitrary number of coffee orders expected. This is used to determine how filled the cup in the dashboard should be.      |
+`maxOrdersPerCustomer`                     | `number`                  | `4`                                        | Maximum numbers of orders allowed per customer.      |
 
 ## Static configuration
 
@@ -41,7 +42,7 @@ These values can be configured via environment variables.
 | `TWILIO_API_KEY`              | Your Twilio API Key. www.twilio.com/console/dev-tools/api-keys                                                  |
 | `TWILIO_API_SECRET`           | Your Twilio API Key. www.twilio.com/console/dev-tools/api-keys                                                  |
 | `TWILIO_MESSAGING_SERVICE`    | Your Twilio Message Service SID. www.twilio.com/console/sms/services                                            |
-| `TWILIO_NOTIFY_SERVICE`       | Your Twilio Notify Service SID. www.twilio.com/console/notify/services                                          |
+| `TWILIO_CONVERSATIONS_SERVICE`       | Your Twilio Conversations Service SID. www.twilio.com/console/conversations/services                                          |
 | `TWILIO_SYNC_SERVICE`         | Your Twilio Sync Service SID. www.twilio.com/console/sync/services                                              |
 
 [consts file]: ../shared/consts

@@ -6,7 +6,7 @@
 
 ### 1. Send message with order
 
-A customer sends a message to one of the channels associated to the configured Messaging Service. This can for example happen via SMS to a respective phone number.
+A customer sends a message to one of the channels associated to the configured Messaging Service. This can for example happen via WhatsApp to a respective phone number.
 
 ### 2. Message forwarded to "incoming webhook"
 
@@ -20,12 +20,12 @@ The route of the webhook is `/api/webhook/incoming`. The `POST` request is being
 
 #### b) The user is already registered for an event or there is only one event:
 
-* parse message to determine intent and which drink is being ordered
-* create a [Binding] in [Twilio Notify] for the user
+* parse message to determine intent and which drink is being ordered 
+* create a [Binding] in [Twilio X] for the user TODO Append everywhere where there is an 'X'
 * create an entry in the [Twilio Sync] customer [Map]
 * create an entry in the [Twilio Sync] open orders [List]
 * create an entry in the [Twilio Sync] all orders [List]
-* send reply message to the user via [Twilio Notify]
+* send reply message to the user via [Twilio X]
 
 ### 3. Order created in Twilio Sync List
 
@@ -33,7 +33,7 @@ If the user ordered a drink the incoming message webhook will create a new item 
 
 ### 4. Reply message sent to user
 
-The notification is sent to the respective [Binding] using the [Twilio Notify] REST API.
+The notification is sent to the respective [Binding] using the [Twilio X] REST API.
 
 ### 5. Order appears on tablet
 
@@ -51,7 +51,7 @@ The code for this can be found in the [sync webhook file].
 
 ### 8. Webhook sends message to user
 
-In the [sync webhook file] we will then send a notification to the user using the [Twilio Notify] REST API to the respective [Binding].
+In the [sync webhook file] we will then send a notification to the user using the [Twilio X] REST API to the respective [Binding].
 
 ### 9. Order is removed from the queue
 
@@ -59,9 +59,8 @@ Once the notification was sent, the entry will be removed from the open orders [
 
 [incoming webhook file]: ../server/api/webhooks/incoming.js
 [sync webhook file]: ../server/api/webhooks/sync.js
-[twilio notify]: https://www.twilio.com/notify
+[twilio conversations]: https://www.twilio.com/conversations
 [twilio sync]: https://www.twilio.com/sync
-[binding]: https://www.twilio.com/docs/api/notify/rest/bindings
 [map]: https://www.twilio.com/docs/api/sync/rest/maps
 [list]: https://www.twilio.com/docs/api/sync/rest/lists
 [data structures documentation]: DATA_STRUCTURES.md

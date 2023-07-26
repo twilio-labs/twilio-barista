@@ -84,7 +84,7 @@
     "rollbar": "^2.5.1",
     "sentry": "^0.1.2",
     "snyk": "^1.520.0",
-    "twilio": "^3.26.1",
+    "twilio": "^3.84.1",
     "twilio-common": "^0.1.6",
     "twilio-sync": "0.5.8",
     "url-join": "^2.0.2"

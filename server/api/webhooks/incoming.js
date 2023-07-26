@@ -8,6 +8,7 @@ const {
   getExistingOrderMessage,
   getOrderCreatedMessage,
   getHelpMessage,
+  getMaxOrdersMessage,
   getNoOpenOrderMessage,
   getQueuePositionMessage,
   getCancelOrderMessage,
@@ -20,12 +21,10 @@ const {
   orderQueueList,
   allOrdersList,
   sendMessage,
-  registerAddress,
-  registerOpenOrder,
-  registerTagForBinding,
-  removeTagForBinding,
-  removeTagsForBindingWithPrefix,
-  getIdentityFromAddress,
+  // registerAddress,
+  // registerOpenOrder,
+  // registerTagForBinding,
+  // removeTagForBinding,
 } = require('../twilio');
 const {
   INTENTS,
@@ -37,15 +36,11 @@ const {
 const { safe } = require('../../utils/async-requests.js');
 
 
-function getCustomerInformation({ From, Body, To, FromCountry }) {
-  if (!From || !Body || !To) {
-    return null;
-  }
-
-  const source = From.indexOf('Messenger') !== -1 ? 'facebook' : 'sms';
+function getCustomerInformation({ From, Body, To, FromCountry, Source }) { //TODO Adapter
   return {
     // address: From,
     openOrders: [],
+    completedOrders: 0,
     countryCode: FromCountry || 'unknown',
     contact: To,
     source,
@@ -58,21 +53,27 @@ function createOrderItem(customer, coffeeOrder, originalMessage) {
     data: {
       product: coffeeOrder,
       message: originalMessage,
-      source: customer.source,
+      source: customer.data.source,
       status: 'open',
-      customer: customer.identity,
+      customer: customer.key,
     },
   };
 }
 
-async function findOrCreateCustomer(customer) {
+async function findOrCreateCustomer(customer) { //TODO adapt
   let customerEntry;
   try {
-    customerEntry = await customersMap.syncMapItems(customer.identity).fetch();
+    customerEntry = await customersMap.syncMapItems(customer.ConversationSid).fetch();
   } catch (err) {
     customerEntry = await customersMap.syncMapItems.create({
-      key: customer.identity,
-      data: customer,
+      key: customer.ConversationSid,
+      data: {
+        openOrders: [],
+        completedOrders: 0,
+        countryCode: 'unknown', //TODO remove if not needed or parse from country code
+        source: customer.Source,
+        eventId: null,
+      },
     });
   }
   return customerEntry;
@@ -86,12 +87,12 @@ async function setEventForCustomer(customerEntry, eventId) {
   //   customerEntry.data.bindingSid,
   //   TAGS.PREFIX_EVENT
   // );
-  const bindingSid = await registerTagForBinding(
-    customerEntry.data.bindingSid,
-    TAGS.PREFIX_EVENT + eventId
-  );
+  // const bindingSid = await registerTagForBinding(
+  //   customerEntry.data.bindingSid,
+  //   TAGS.PREFIX_EVENT + eventId
+  // );
   const data = Object.assign({}, customerEntry.data, {
-    bindingSid,
+    // bindingSid,
     eventId,
     eventExpiryDate,
   });
@@ -100,25 +101,21 @@ async function setEventForCustomer(customerEntry, eventId) {
 
 async function removeEventForCustomer(customerEntry) {
   const data = Object.assign({}, customerEntry.data);
-  data.bindingSid = await removeTagForBinding(
-    data.bindingSid,
-    TAGS.PREFIX_EVENT + data.eventId
-  );
+  // data.bindingSid = await removeTagForBinding( //TODO how to handle multiple events then?
+  //   data.bindingSid,
+  //   TAGS.PREFIX_EVENT + data.eventId
+  // );
   data.eventId = undefined;
   data.eventExpiryDate = undefined;
   return customerEntry.update({ data });
 }
 
-async function updateBindingSidForCustomer(customerEntry, bindingSid) {
-  const data = Object.assign({}, customerEntry.data, {
-    bindingSid,
-  });
-  return customerEntry.update({ data });
-}
-
-async function sendMessageToCustomer(customer, msg) {
-  return sendMessage(customer.identity, msg);
-}
+// async function updateBindingSidForCustomer(customerEntry, bindingSid) {
+//   const data = Object.assign({}, customerEntry.data, {
+//     bindingSid,
+//   });
+//   return customerEntry.update({ data });
+// }
 
 function determineIntent(message, forEvent) {
   const msgNormalized = message.toLowerCase().trim();
@@ -145,6 +142,12 @@ function determineIntent(message, forEvent) {
   if (msgNormalized.indexOf('help') !== -1) {
     return {
       intent: INTENTS.HELP,
+    };
+  }
+
+  if (msgNormalized.indexOf('send this message to order') !== -1) {
+    return {
+      intent: INTENTS.WELCOME,
     };
   }
 
@@ -193,7 +196,7 @@ async function getQueuePosition(customer) {
 }
 
 async function cancelOrder(customer) {
-  const key = customer.identity;
+  const key = customer.key;
   let customerEntry;
   try {
     customerEntry = await customersMap.syncMapItems(key).fetch();
@@ -204,32 +207,36 @@ async function cancelOrder(customer) {
   if (!orderNumber) {
     return false;
   }
-  await orderQueueList(customer.eventId)
-    .syncListItems(orderNumber)
-    .remove();
+  const orderedItemLink = orderQueueList(customer.data.eventId)
+    .syncListItems(orderNumber);
+  const orderedItem = await orderedItemLink.fetch()
+  await orderedItemLink.remove();
   customerEntry.data.openOrders = [];
   await customersMap.syncMapItems(key).update({
     data: customerEntry.data,
   });
-  return true;
+  return {
+    product: orderedItem.data.product,
+    orderNumber: orderNumber
+  };
 }
 
 /**
- * This is the request handler for incoming SMS and Facebook messages by handling webhook request from Twilio.
+ * This is the request handler for incoming SMS and WhatsApp messages by handling webhook request from Twilio.
  *
  * @param {any} req
  * @param {any} res
  * @returns
  */
 async function handleIncomingMessages(req, res) {
-  const customer = getCustomerInformation(req.body);
-  customer.identity = getIdentityFromAddress(req.body.From);
-  let customerEntry = await findOrCreateCustomer(customer);
-  if (!customerEntry.data.bindingSid) {
-    const { sid } = await registerAddress(req.body.From, customer.source);
-    customerEntry = await updateBindingSidForCustomer(customerEntry, sid);
-    customer.bindingSid = sid;
-  }
+  // const customer = getCustomerInformation(req.body);
+  // customer.identity = getIdentityFromAddress(req.body.From);
+  let customerEntry = await findOrCreateCustomer(req.body);
+  // if (!customerEntry.data.bindingSid) {
+  //   const { sid } = await registerAddress(req.body.From, customer.source);
+  //   customerEntry = await updateBindingSidForCustomer(customerEntry, sid);
+  //   customer.bindingSid = sid;
+  // }
 
   if (
     !customerEntry.data.eventId ||
@@ -286,7 +293,6 @@ async function handleIncomingMessages(req, res) {
   }
 
   const { eventId } = customerEntry.data;
-  customer.eventId = eventId;
   const messageIntent = determineIntent(req.body.Body, eventId);
 
   if (messageIntent.intent === INTENTS.REGISTER) {
@@ -320,26 +326,26 @@ async function handleIncomingMessages(req, res) {
     );
     try {
       let responseMessage;
-      if (messageIntent.intent === INTENTS.HELP) {
+      if (messageIntent.intent === INTENTS.HELP || messageIntent.intent === INTENTS.WELCOME) {
         responseMessage = getHelpMessage(availableOptions);
       } else if (messageIntent.intent === INTENTS.QUEUE) {
-        const queuePosition = await getQueuePosition(customer);
+        const queuePosition = await getQueuePosition(customerEntry);
         if (Number.isNaN(queuePosition)) {
           responseMessage = getNoOpenOrderMessage();
         } else {
           responseMessage = getQueuePositionMessage(queuePosition);
         }
       } else if (messageIntent.intent === INTENTS.CANCEL) {
-        const cancelled = await cancelOrder(customer);
+        const cancelled = await cancelOrder(customerEntry);
         if (cancelled) {
-          responseMessage = getCancelOrderMessage();
+          responseMessage = getCancelOrderMessage(cancelled.product, cancelled.orderNumber);
         } else {
           responseMessage = getNoOpenOrderMessage();
         }
       } else {
         responseMessage = getWrongOrderMessage(req.body.Body, availableOptions);
       }
-      await sendMessageToCustomer(customer, responseMessage);
+      await sendMessage(customerEntry.key, responseMessage);
       res.send();
       return;
     } catch (err) {
@@ -350,17 +356,27 @@ async function handleIncomingMessages(req, res) {
   }
   const coffeeOrder = messageIntent.value;
 
-  const { openOrders } = customerEntry.data;
+  const { openOrders, completedOrders } = customerEntry.data;
+  if (completedOrders >= config(eventId).maxOrdersPerCustomer) {
+
+    try {
+      await sendMessage(customerEntry.key, getMaxOrdersMessage());
+      return;
+    } catch (err) {
+      req.log.error(err);
+      return;
+    }
+  }
   if (Array.isArray(openOrders) && openOrders.length > 0) {
     try {
       const order = await orderQueueList(eventId)
         .syncListItems(openOrders[0])
         .fetch();
-      const responseMessage = getExistingOrderMessage(
+
+      await sendMessage(customerEntry.key, getExistingOrderMessage(
         order.data.product,
         order.index
-      );
-      await sendMessageToCustomer(customer, responseMessage);
+      ));
       return;
     } catch (err) {
       req.log.error(err);
@@ -370,7 +386,7 @@ async function handleIncomingMessages(req, res) {
 
   try {
     const orderEntry = await orderQueueList(eventId).syncListItems.create(
-      createOrderItem(customer, coffeeOrder, req.body.Body)
+      createOrderItem(customerEntry, coffeeOrder, req.body.Body)
     );
 
     customerEntry.data.openOrders.push(orderEntry.index);
@@ -382,21 +398,20 @@ async function handleIncomingMessages(req, res) {
       data: {
         product: coffeeOrder,
         message: req.body.Body,
-        source: customer.source,
-        countryCode: customer.countryCode,
+        source: customerEntry.data.source,
+        countryCode: customerEntry.countryCode,
       },
     });
 
-    const newBindingSid = await registerOpenOrder(
-      customerEntry.data.bindingSid
-    );
-    customerEntry = await updateBindingSidForCustomer(
-      customerEntry,
-      newBindingSid
-    );
+    // const newBindingSid = await registerOpenOrder(
+    //   customerEntry.data.bindingSid
+    // );
+    // customerEntry = await updateBindingSidForCustomer(
+    //   customerEntry,
+    //   newBindingSid
+    // );
 
-    const msg = getOrderCreatedMessage(coffeeOrder, orderEntry.index, eventId);
-    await sendMessageToCustomer(customer, msg);
+    await sendMessage(customerEntry.key, getOrderCreatedMessage(coffeeOrder, orderEntry.index, eventId));
     res.send();
   } catch (err) {
     req.log.error(err);

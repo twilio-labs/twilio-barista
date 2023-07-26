@@ -40,9 +40,36 @@ const BARISTA = {
   },
 };
 
+
+const SMOOTHIE = {
+  iconBasePath: '/assets/smoothie-icons/smoothie-icons_',
+  dashboard: {
+    headerTitle: 'Smoothie Bar',
+    headerIcon: 'blender',
+    defaultProductIcon: 'cup',
+    productIcons: {
+      SendGrid: 'orange',
+      Lambada: 'orange',
+      Twilio: 'strawberry',
+      Colombia: 'strawberry',
+      Segment: 'pineapple',
+      Smaragd: 'pineapple',
+    },
+  },
+  kiosk: {
+    title: 'Thirsty? Smoothie?',
+    tagLine: 'Order Smoothies via WhatsApp',
+  },
+};
+
 export default function get(eventType) {
   if (eventType === 'bartender') {
     return BARTENDER;
+  } else if (eventType === 'smoothies') {
+    return SMOOTHIES;
+  }
+  if (eventType === 'smoothie') {
+    return SMOOTHIE;
   }
   return BARISTA;
 }

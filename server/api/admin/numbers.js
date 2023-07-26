@@ -1,44 +1,44 @@
 const {
   restClient,
   messagingClient,
-  loadConnectedPhoneNumbers,
+  // loadConnectedPhoneNumbers,
 } = require('../twilio');
 const { updateGlobalConfigEntry } = require('../../data/config');
 
-async function handleNumberAcquisition(req, res, next) {
-  const { code } = req.body;
-  if (!code) {
-    res.sendStatus(400);
-    return;
-  }
+// async function handleNumberAcquisition(req, res, next) {
+//   const { code } = req.body;
+//   if (!code) {
+//     res.sendStatus(400);
+//     return;
+//   }
 
-  try {
-    const numbers = await restClient.availablePhoneNumbers(code).local.list({
-      smsEnabled: 'true',
-    });
-    if (numbers.length === 0) {
-      res.send({});
-      return;
-    }
+//   try {
+//     const numbers = await restClient.availablePhoneNumbers(code).local.list({
+//       smsEnabled: 'true',
+//     });
+//     if (numbers.length === 0) {
+//       res.send({});
+//       return;
+//     }
 
-    const { phoneNumber } = numbers[0];
-    const { sid } = await restClient.incomingPhoneNumbers.create({
-      phoneNumber,
-    });
-    const resp = await messagingClient.phoneNumbers.create({
-      phoneNumberSid: sid,
-    });
-    const connectedPhoneNumbers = await loadConnectedPhoneNumbers();
-    await updateGlobalConfigEntry(
-      'connectedPhoneNumbers',
-      connectedPhoneNumbers
-    );
-    res.send({ phoneNumber });
-  } catch (err) {
-    req.log.error(err);
-    res.sendStatus(500);
-  }
-}
+//     const { phoneNumber } = numbers[0];
+//     const { sid } = await restClient.incomingPhoneNumbers.create({
+//       phoneNumber,
+//     });
+//     const resp = await messagingClient.phoneNumbers.create({
+//       phoneNumberSid: sid,
+//     });
+//     // const connectedPhoneNumbers = await loadConnectedPhoneNumbers();
+//     await updateGlobalConfigEntry(
+//       'connectedPhoneNumbers',
+//       connectedPhoneNumbers
+//     );
+//     res.send({ phoneNumber });
+//   } catch (err) {
+//     req.log.error(err);
+//     res.sendStatus(500);
+//   }
+// }
 
 async function getAllAvailableCountries(req, res, next) {
   try {
@@ -57,5 +57,5 @@ async function getAllAvailableCountries(req, res, next) {
 
 module.exports = {
   get: getAllAvailableCountries,
-  post: handleNumberAcquisition,
+  // post: handleNumberAcquisition,
 };

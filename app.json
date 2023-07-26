@@ -9,10 +9,10 @@
     "coffee",
     "barista",
     "sync",
-    "notify"
+    "conversations"
   ],
-  "website": "https://github.com/dkundel",
-  "repository": "https://github.com/dkundel/twilio-barista",
+  "website": "https://github.com/twilio-labs",
+  "repository": "https://github.com/twilio-labs/twilio-barista",
   "success_url": "/",
   "addons": [],
   "env": {
@@ -42,8 +42,8 @@
       "description": "Your Twilio Messaging Service SID. www.twilio.com/console/sms/services",
       "required": true
     },
-    "TWILIO_NOTIFY_SERVICE": {
-      "description": "Your Twilio Notify Service SID. www.twilio.com/console/notify/services",
+    "TWILIO_CONVERSATIONS_SERVICE": {
+      "description": "Your Twilio Conversations Service SID. www.twilio.com/console/conversations/services",
       "required": true
     },
     "TWILIO_SYNC_SERVICE": {

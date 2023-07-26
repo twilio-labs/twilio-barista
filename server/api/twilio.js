@@ -5,13 +5,11 @@ const kebabCase = require('lodash.kebabcase');
 const { AccessToken } = twilio.jwt;
 const { SyncGrant } = AccessToken;
 
-const { getIdentityFromAddress } = require('../utils/identity');
-
 const {
   TWILIO_API_KEY,
   TWILIO_API_SECRET,
   TWILIO_ACCOUNT_SID,
-  TWILIO_NOTIFY_SERVICE,
+  TWILIO_CONVERSATIONS_SERVICE,
   TWILIO_SYNC_SERVICE,
   TWILIO_MESSAGING_SERVICE,
 } = process.env;
@@ -28,7 +26,7 @@ const restClient = twilio(TWILIO_API_KEY, TWILIO_API_SECRET, {
 });
 
 const syncClient = restClient.sync.services(TWILIO_SYNC_SERVICE);
-const notifyClient = restClient.notify.services(TWILIO_NOTIFY_SERVICE);
+const conversationsClient = restClient.conversations.v1; // TODO remove or maybe not (TWILIO_CONVERSATIONS_SERVICE);
 const messagingClient = restClient.messaging.services(TWILIO_MESSAGING_SERVICE);
 
 const orderQueueList = eventId =>
@@ -39,113 +37,112 @@ const metricsMap = syncClient.syncMaps(SYNC_NAMES.METRICS);
 const allOrdersList = eventId =>
   syncClient.syncLists(SYNC_NAMES.ALL_ORDERS + eventId);
 
-async function registerAddress(address, bindingType) {
-  const identity = getIdentityFromAddress(address);
-  const endpoint = `${identity}:${bindingType}`;
-  const tag = [TAGS.INTERACTED];
-  const { sid } = await notifyClient.bindings.create({
-    identity,
-    address,
-    endpoint,
-    bindingType,
-    tag,
+// async function registerAddress(address, bindingType) { TODO Remove
+//   const identity = getIdentityFromAddress(address);
+//   const endpoint = `${identity}:${bindingType}`;
+//   const tag = [TAGS.INTERACTED];
+//   const { sid } = await notifyClient.bindings.create({
+//     identity,
+//     address,
+//     endpoint,
+//     bindingType,
+//     tag,
+//   });
+//   return { identity, sid };
+// }
+
+async function sendMessage(conversationSID, msg) {
+  return conversationsClient.conversations(conversationSID).messages.create({
+    author: 'system',
+    ...msg
   });
-  return { identity, sid };
 }
 
-async function sendMessage(identity, body) {
-  const notification = await notifyClient.notifications.create({
-    identity,
-    body,
-  });
-  return notification;
-}
+// async function sendMessageToAll(body) { TODO remove where this is callend
+//   const notification = await notifyClient.notifications.create({
+//     tag: TAGS.ALL,
+//     body,
+//   });
+//   return notification;
+// }
 
-async function sendMessageToAll(body) {
-  const notification = await notifyClient.notifications.create({
-    tag: TAGS.ALL,
-    body,
-  });
-  return notification;
-}
+// async function sendMessageToAllForEvent(body, eventId) {  TODO remove where this is callend
+//   const notification = await notifyClient.notifications.create({
+//     tag: TAGS.PREFIX_EVENT + eventId,
+//     body,
+//   });
+//   return notification;
+// }
 
-async function sendMessageToAllForEvent(body, eventId) {
-  const notification = await notifyClient.notifications.create({
-    tag: TAGS.PREFIX_EVENT + eventId,
-    body,
-  });
-  return notification;
-}
+// async function registerTagForBinding(bindingSid, tag) {  TODO remove where this is callend
+//   const originalBinding = await notifyClient.bindings(bindingSid).fetch();
+//   const newBindingData = {
+//     identity: originalBinding.identity,
+//     address: originalBinding.address,
+//     endpoint: originalBinding.endpoint,
+//     bindingType: originalBinding.bindingType,
+//   };
+//   newBindingData.tag = [
+//     ...(originalBinding.tags || []).filter(t => t !== tag),
+//     tag,
+//   ];
+//   const { sid } = await notifyClient.bindings.create(newBindingData);
+//   return sid;
+// }
 
-async function registerTagForBinding(bindingSid, tag) {
-  const originalBinding = await notifyClient.bindings(bindingSid).fetch();
-  const newBindingData = {
-    identity: originalBinding.identity,
-    address: originalBinding.address,
-    endpoint: originalBinding.endpoint,
-    bindingType: originalBinding.bindingType,
-  };
-  newBindingData.tag = [
-    ...(originalBinding.tags || []).filter(t => t !== tag),
-    tag,
-  ];
-  const { sid } = await notifyClient.bindings.create(newBindingData);
-  return sid;
-}
+// async function removeTagForBinding(bindingSid, tagToRemove) {  TODO remove where this is callend
+//   const originalBinding = await notifyClient.bindings(bindingSid).fetch();
+//   const newBindingData = {
+//     identity: originalBinding.identity,
+//     address: originalBinding.address,
+//     endpoint: originalBinding.endpoint,
+//     bindingType: originalBinding.bindingType,
+//   };
+//   newBindingData.tag = (originalBinding.tags || []).filter(
+//     tag => tag !== tagToRemove
+//   );
+//   const { sid } = await notifyClient.bindings.create(newBindingData);
+//   return sid;
+// }
 
-async function removeTagForBinding(bindingSid, tagToRemove) {
-  const originalBinding = await notifyClient.bindings(bindingSid).fetch();
-  const newBindingData = {
-    identity: originalBinding.identity,
-    address: originalBinding.address,
-    endpoint: originalBinding.endpoint,
-    bindingType: originalBinding.bindingType,
-  };
-  newBindingData.tag = (originalBinding.tags || []).filter(
-    tag => tag !== tagToRemove
-  );
-  const { sid } = await notifyClient.bindings.create(newBindingData);
-  return sid;
-}
+// async function removeTagsForBindingWithPrefix(bindingSid, tagPrefix) {  TODO remove where this is callend
+//   const originalBinding = await notifyClient.bindings(bindingSid).fetch();
+//   const newBindingData = {
+//     identity: originalBinding.identity,
+//     address: originalBinding.address,
+//     endpoint: originalBinding.endpoint,
+//     bindingType: originalBinding.bindingType,
+//   };
+//   newBindingData.tag = (originalBinding.tags || []).filter(
+//     tag => !tag.startsWith(tagPrefix)
+//   );
+//   const { sid } = await notifyClient.bindings.create(newBindingData);
+//   return sid;
+// }
 
-async function removeTagsForBindingWithPrefix(bindingSid, tagPrefix) {
-  const originalBinding = await notifyClient.bindings(bindingSid).fetch();
-  const newBindingData = {
-    identity: originalBinding.identity,
-    address: originalBinding.address,
-    endpoint: originalBinding.endpoint,
-    bindingType: originalBinding.bindingType,
-  };
-  newBindingData.tag = (originalBinding.tags || []).filter(
-    tag => !tag.startsWith(tagPrefix)
-  );
-  const { sid } = await notifyClient.bindings.create(newBindingData);
-  return sid;
-}
+// async function registerOpenOrder(bindingSid) {  TODO remove where this is callend
+//   return registerTagForBinding(bindingSid, TAGS.OPEN_ORDER);
+// }
 
-async function registerOpenOrder(bindingSid) {
-  return registerTagForBinding(bindingSid, TAGS.OPEN_ORDER);
-}
+// async function deregisterOpenOrder(bindingSid) {  TODO remove where this is callend
+//   return removeTagForBinding(bindingSid, TAGS.OPEN_ORDER);
+// }
 
-async function deregisterOpenOrder(bindingSid) {
-  return removeTagForBinding(bindingSid, TAGS.OPEN_ORDER);
-}
+// async function sendMessageToAllOpenOrders(body) {  TODO remove where this is callend
+//   const notification = await notifyClient.notifications.create({
+//     tag: TAGS.OPEN_ORDER,
+//     body,
+//   });
+//   return notification;
+// }
 
-async function sendMessageToAllOpenOrders(body) {
-  const notification = await notifyClient.notifications.create({
-    tag: TAGS.OPEN_ORDER,
-    body,
-  });
-  return notification;
-}
-
-async function sendMessageToAllOpenOrdersForEvent(body, eventId) {
-  const notification = await notifyClient.notification.create({
-    tag: TAGS.PREFIX_EVENT + eventId,
-    body,
-  });
-  return notification;
-}
+// async function sendMessageToAllOpenOrdersForEvent(body, eventId) {  TODO remove where this is callend
+//   const notification = await notifyClient.notification.create({
+//     tag: TAGS.PREFIX_EVENT + eventId,
+//     body,
+//   });
+//   return notification;
+// }
 
 async function setup(baseUrl) {
   await configureWebhookUrls(baseUrl);
@@ -154,18 +151,18 @@ async function setup(baseUrl) {
 }
 
 async function configureWebhookUrls(baseUrl) {
-  await messagingClient.update({
-    friendlyName: 'Twilio Barista',
-    inboundRequestUrl: urljoin(baseUrl, '/api/webhook/incoming'),
-  });
+  // await messagingClient.update({ //TODO need to be changed to update conversation service
+  //   friendlyName: 'Twilio Barista',
+  //   inboundRequestUrl: urljoin(baseUrl, '/api/webhook/incoming'),
+  // });
   await syncClient.update({
-    webhookUrl: urljoin(baseUrl, '/api/webhook/sync'),
+    webhookUrl: urljoin(baseUrl, '/api/webhook/sync'), //TODO this is very error prone when running from localhost / ngrok
   });
   return true;
 }
 
 async function loadConnectedPhoneNumbers() {
-  const phoneNumbers = await messagingClient.phoneNumbers.list();
+  const phoneNumbers = await messagingClient.phoneNumbers.list(); //TODO fetch WhatsApp bindings as well
   const connectedPhoneNumbers = phoneNumbers.map(p => p.phoneNumber).join(', ');
   return connectedPhoneNumbers;
 }
@@ -259,7 +256,7 @@ async function setPermissions() {
   ]);
 }
 
-const createConfigurationDoc = function() {
+const createConfigurationDoc = function () {
   return createIfNotExists(
     syncClient.documents,
     SYNC_NAMES.CONFIGURATION,
@@ -272,11 +269,11 @@ async function createOrderQueue(eventId) {
   return resetList(name);
 }
 
-const createCustomerMap = function() {
+const createCustomerMap = function () {
   return createIfNotExists(syncClient.syncMaps, SYNC_NAMES.CUSTOMERS);
 };
 
-const createMetricsMap = function() {
+const createMetricsMap = function () {
   return createIfNotExists(syncClient.syncMaps, SYNC_NAMES.METRICS);
 };
 
@@ -351,13 +348,13 @@ async function resetMap(name) {
   await createIfNotExists(syncClient.syncMaps, name);
 }
 
-async function resetNotify() {
-  const bindings = await notifyClient.bindings.list();
-  const deleteBindings = bindings.map(async ({ sid }) =>
-    notifyClient.bindings(sid).remove()
-  );
-  return Promise.all(deleteBindings);
-}
+// async function resetNotify() { //TODO need an replacement? is there a reset for conversations?
+//   const bindings = await notifyClient.bindings.list();
+//   const deleteBindings = bindings.map(async ({ sid }) =>
+//     notifyClient.bindings(sid).remove()
+//   );
+//   return Promise.all(deleteBindings);
+// }
 
 function getEventConfigName(slug) {
   return SYNC_NAMES.EVENT_CONFIG + slug;
@@ -408,10 +405,10 @@ function getEventConfigDoc(slug) {
 module.exports = {
   SYNC_NAMES,
   restClient,
-  notifyClient,
+  conversationsClient,
   syncClient,
   sendMessage,
-  registerAddress,
+  // registerAddress,
   messagingClient,
   orderQueueList,
   configurationDoc,
@@ -422,16 +419,16 @@ module.exports = {
   createToken,
   createConfigurationDoc,
   loadConnectedPhoneNumbers,
-  sendMessageToAll,
-  sendMessageToAllForEvent,
-  sendMessageToAllOpenOrders,
-  sendMessageToAllOpenOrdersForEvent,
-  registerOpenOrder,
-  deregisterOpenOrder,
+  // sendMessageToAll,
+  // sendMessageToAllForEvent,
+  // sendMessageToAllOpenOrders,
+  // sendMessageToAllOpenOrdersForEvent,
+  // registerOpenOrder,
+  // deregisterOpenOrder,
   resetList,
   setPermissions,
   resetMap,
-  resetNotify,
+  // resetNotify,
   fetchEventConfigurations,
   getEventConfigDoc,
   createEventConfiguration,
@@ -439,9 +436,8 @@ module.exports = {
   resetAllLists,
   createAllOrdersList,
   createOrderQueue,
-  registerTagForBinding,
-  removeTagForBinding,
-  removeTagsForBindingWithPrefix,
-  getIdentityFromAddress,
+  // registerTagForBinding,
+  // removeTagForBinding,
+  // removeTagsForBindingWithPrefix,
   removeAllEventConfigDocs,
 };

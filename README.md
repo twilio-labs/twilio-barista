@@ -32,7 +32,7 @@ More information on how it works is in the [documentation].
 * Store orders and real-time synchronization them between back-end and front-end using [Twilio Sync]
 * Easy dynamic application configuration using [Twilio Sync]
 * Dynamic phone number acquisition/configuration using the [Twilio REST API]
-* Sending bulk notifications to different user segments on different channels using [Twilio Notify]
+* Managing message threads using [Twilio Conversations]
 * Permission management based on [Twilio Sync]
 * Top PWA support thanks to [Preact CLI] based front-end
 * Easy way to reset the application from the admin interface
@@ -66,9 +66,10 @@ Go into the [Twilio Console] and [generate an API Key and Secret](https://www.tw
 
 Create a [Messaging Service in the Twilio Console](https://www.twilio.com/console/sms/services) and store the SID.
 
-#### 3. Create a Notify Service
+#### 3. Create a Conversations Service
 
-Create a [Notify Service in the Twilio Console](https://www.twilio.com/console/notify/services) and choose your created Messaging Service as a Messaging Service. Make sure to store the SID.
+Create a [Conversations Service in the Twilio Console](https://www.twilio.com/console/conversations/services) and choose your created Messaging Service as a Messaging Service. Make sure to store the SID.
+TODO append
 
 #### 4. Create a Sync Service
 
@@ -101,7 +102,7 @@ The following environment variables are necessary for Twilio Barista:
 * `TWILIO_API_SECRET`
 * `TWILIO_MESSAGING_SERVICE`
 * `TWILIO_SYNC_SERVICE`
-* `TWILIO_NOTIFY_SERVICE`
+* `TWILIO_CONVERSATIONS_SERVICE`
 * `PHONE_NUMBER_HASHING_SECRET` - This will be used to generate internal identities based on the phone number
 * `LOGINS` - Semi-colon separated list based on the following schema: `username,password,role`. Available roles are:
   * `barista` - Enables you to see all orders but nothing else
@@ -160,9 +161,12 @@ Authenticate with an admin user, go into the Admin section and under Other click
 
 #### 6. Acquire phone numbers
 
-Choose in the Admin section under Other a country that you want a phone number from and click acquire. It will purchase the number, configure it and you can see it in the Configuration section of your Admin part under `connectedPhoneNumbers`.
+Purchase a number and configure it in the Configuration section of your Admin part under `connectedPhoneNumbers`.
 
-#### 7. You are ready for some ☕️ action!
+#### 7. Register the webhook in the Twilio Consol
+Go to the [Twilio Console](https://console.twilio.com) and integrate the `[Domain]/api/webhook/incoming` endpoint to the messaging service you specified with the SID above. 
+
+#### 8. You are ready for some ☕️ action!
 
 You are all set. People can start sending in messages to those numbers and you will receive them in the order section of your interface.
 
@@ -236,7 +240,7 @@ MIT © Dominik Kundel
 [twilio rest api]: https://www.twilio.com/docs/api/rest
 [twilio messaging]: https://www.twilio.com/messaging
 [twilio sms]: https://www.twilio.com/sms
-[twilio notify]: https://www.twilio.com/notify
+[twilio conversations]: https://www.twilio.com/conversations
 [twilio sync]: https://wwww.twilio.com/sync
 [twilio channels]: https://www.twilio.com/channels
 [preact cli]: https://github.com/developit/preact-cli

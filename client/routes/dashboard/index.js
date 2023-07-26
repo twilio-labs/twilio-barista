@@ -48,9 +48,9 @@ export default class Dashboard extends Component {
           eventType={eventType}
         />
         <div class={style.main}>
-          <div class={style.cupContainer}>
+          {/* <div class={style.cupContainer}>
             <Cup percentage={percentage} value={totalOrders} />
-          </div>
+          </div> */}
           <div class={style.listingsContainer}>
             <ProductListings products={product} eventType={eventType} />
           </div>

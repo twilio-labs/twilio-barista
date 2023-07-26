@@ -9,7 +9,7 @@ export default class OrderList extends Component {
     });
     const noEntries = (
       <div class={style.emptyOrders}>
-        <p class={style.noCoffeeText}>No Open Coffee Orders</p>
+        <p class={style.noCoffeeText}>No Open Orders</p>
       </div>
     );
     return (

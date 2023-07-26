@@ -6,8 +6,10 @@ const {
   sendMessageToAllOpenOrdersForEvent,
 } = require('../twilio');
 
+//TODO remove all?
+
 async function requestHandler(req, res) {
-  const { sendTo, message, identity, eventId } = req.body;
+  const { sendTo, message, identity, eventId } = req.body; 
   try {
     let notification;
     if (sendTo === 'all') {
