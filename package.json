@@ -48,7 +48,7 @@
     "nodemon": "^1.18.9",
     "npm-run-all": "^4.0.2",
     "pino-colada": "^1.4.0",
-    "preact-cli": "^2.2.1",
+    "preact-cli": "^3.5.0",
     "preact-cli-plugin-fast-async": "^1.0.1",
     "prettier": "^1.11.1",
     "stmux": "^1.8.1"
