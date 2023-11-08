@@ -32,9 +32,9 @@
     "snyk-protect": "snyk protect"
   },
   "devDependencies": {
-    "all-contributors-cli": "^5.10.2",
+    "all-contributors-cli": "^6.14.0",
     "dotenv": "^6.2.0",
-    "eslint": "^4.19.0",
+    "eslint": "^7.0.0",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.9.0",
@@ -44,10 +44,10 @@
     "less": "^3.9.0",
     "less-loader": "^4.1.0",
     "node-env-run": "^3.0.2",
-    "nodemon": "^1.18.9",
+    "nodemon": "^2.0.3",
     "npm-run-all": "^4.0.2",
     "pino-colada": "^1.4.0",
-    "preact-cli": "^2.2.1",
+    "preact-cli": "^3.3.4",
     "preact-cli-plugin-fast-async": "^1.0.1",
     "prettier": "^1.11.1",
     "stmux": "^1.8.1"
@@ -55,7 +55,7 @@
   "dependencies": {
     "@material/select": "^0.3.9",
     "@sentry/browser": "^4.5.0",
-    "@sentry/node": "^4.4.2",
+    "@sentry/node": "^5.7.0",
     "basic-auth": "^1.1.0",
     "body-parser": "^1.18.3",
     "buffer": "^5.0.6",
@@ -87,7 +87,7 @@
     "snyk": "^1.520.0",
     "twilio": "^3.84.1",
     "twilio-common": "^0.1.6",
-    "twilio-sync": "0.5.8",
+    "twilio-sync": "0.8.0",
     "url-join": "^2.0.2"
   },
   "snyk": true
