@@ -31,6 +31,10 @@ const {
 
 const { safe } = require('../../utils/async-requests.js');
 
+const {
+  X_VERCEL_PROTECTION_BYPASS,
+  TWILIO_AI_ASSISTANT_ID
+} = process.env;
 
 function createOrderItem(customer, coffeeOrder, originalMessage) {
   return {
@@ -143,50 +147,114 @@ function determineIntent(message, forEvent) {
   };
 }
 
-async function getQueuePosition(customer) {
-  const key = customer.identity;
-  let customerEntry;
-  try {
-    customerEntry = await customersMap.syncMapItems(key).fetch();
-  } catch (err) {
-    return NaN;
-  }
-  const orderNumber = customerEntry.data.openOrders[0];
+// TODO: Not currently possible to use as AI assistant tool w/ a DELETE
+async function getOrderStatus(customer, eventId) {
+  const orderNumber = customer.data.openOrders[0];
   if (!orderNumber) {
-    return NaN;
+    return {};
   }
-  const items = await orderQueueList(customer.eventId).syncListItems.list({
+  const items = await orderQueueList(eventId).syncListItems.list({
     pageSize: 100,
   });
   const queuePosition = items.findIndex(item => item.index === orderNumber);
-  return queuePosition >= 0 ? queuePosition : NaN;
+  return {
+    queuePosition
+  };
 }
 
-async function cancelOrder(customer) {
-  const key = customer.key;
-  let customerEntry;
-  try {
-    customerEntry = await customersMap.syncMapItems(key).fetch();
-  } catch (err) {
-    return false;
-  }
-  const orderNumber = customerEntry.data.openOrders[0];
+// TODO: Not currently possible to use as AI assistant tool w/ a DELETE
+async function cancelOrder(customer, eventId) {
+  const orderNumber = customer.data.openOrders[0];
   if (orderNumber === undefined) {
     return false;
   }
-  const orderedItemLink = orderQueueList(customer.data.eventId)
+  const orderedItemLink = orderQueueList(eventId)
     .syncListItems(orderNumber);
   const orderedItem = await orderedItemLink.fetch()
   await orderedItemLink.remove();
-  customerEntry.data.openOrders = [];
+  customer.data.openOrders = [];
   await customersMap.syncMapItems(key).update({
-    data: customerEntry.data,
+    data: customer.data,
   });
   return {
     product: orderedItem.data.product,
     orderNumber: orderNumber
   };
 }
+
+async function placeOrder(customer, eventId, order) {
+  const {menuItem, specialRequests} = order;
+  const orderEntry = await orderQueueList(eventId).syncListItems.create(
+    createOrderItem(customer, menuItem, specialRequests)
+  );
+  customer.data.openOrders.push(orderEntry.index);
+  await customersMap.syncMapItems(customer.key).update({
+    data: customer.data,
+  });
+
+  await allOrdersList(eventId).syncListItems.create({
+    data: {
+      product: menuItem,
+      message: specialRequests,
+      source: customer.data.source,
+      countryCode: customer.data.countryCode,
+    }
+  });
+  return {
+    orderNumber: orderEntry.index
+  };
+}
+
+async function getAIResponse(sessionId, message) {
+  const response = await fetch(`https://hack-assistant.twilionext.com/api/${TWILIO_AI_ASSISTANT_ID}/webhooks/rest`, {
+    method: 'POST',
+    body: JSON.stringify({
+        Identity: 'NONE',
+        SessionId: sessionId,
+        // SessionId: customerEntry.key,
+        Body: message
+        // Body: req.body.Body
+    }),
+    headers: {
+      'content-type': 'application/json',
+      'x-vercel-protection-bypass': X_VERCEL_PROTECTION_BYPASS
+    }
+  })
+
+  const results = await response.json();
+  return results.body;
+}
+
+// Handle an incoming order: called from the AI assistant tool 'place-order'
+async function handleOrderAction(req, res) {
+  const ConversationSid = req.headers['x-session-id'].split(':').pop()
+  let customerEntry = await findOrCreateCustomer({ConversationSid});
+  let eventId = customerEntry.data.eventId;
+  let responseBody;
+
+  try {
+    switch (req.method) {
+      case 'GET':
+        responseBody = await getOrderStatus(customerEntry, eventId);
+        break;
+      case 'DELETE':
+        responseBody = await cancelOrder(customerEntry, eventId);
+        break;
+      case 'POST':
+        responseBody = await placeOrder(customerEntry, eventId, req.body);
+        break;
+      default:
+        throw new Error(`${req.method} is not supported`)
+    }
+
+    res.send(responseBody);
+
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).send();
+  }
+}
+
 
 /**
  * This is the request handler for incoming SMS and WhatsApp messages by handling webhook request from Twilio.
@@ -239,123 +307,120 @@ async function handleIncomingMessages(req, res) {
   }
 
   const { eventId } = customerEntry.data;
-  const messageIntent = determineIntent(req.body.Body, eventId);
-
-  if (messageIntent.intent === INTENTS.REGISTER) {
-    customerEntry = await setEventForCustomer(
-      customerEntry,
-      messageIntent.value
-    );
-    await sendMessage(customerEntry.key, { body: `Registered for ${messageIntent.value}` });
-    return;
-  } else if (messageIntent.intent === INTENTS.UNREGISTER) {
-    customerEntry = await removeEventForCustomer(customerEntry);
-    await sendMessage(customerEntry.key, { body: `Unregistered from all events` });
-    return;
-  } else if (messageIntent.intent === INTENTS.GET_EVENT) {
-    await sendMessage(customerEntry.key, { body: `You are registered for: ${eventId}` });
-    return;
-  }
-
   if (!config(eventId).isOn) {
     await sendMessage(customerEntry.key, getSystemOfflineMessage(eventId));
     return;
   }
-  // Respond to HTTP request with empty Response object since we will use the REST API to respond to messages.
-  const twiml = new MessagingResponse();
-  res.type('text/xml').send(twiml.toString());
 
-  if (messageIntent.intent !== INTENTS.ORDER) {
-    const { fullMenu, availableMenu } = config(eventId);
-    const filteredMenu = fullMenu.filter(item => availableMenu[item.shortTitle]);
+  // This is where split should happen to AI or not AI
+  if (config(eventId).useAI) {
     try {
-      let responseMessage;
-      if (messageIntent.intent === INTENTS.HELP || messageIntent.intent === INTENTS.WELCOME) {
-        responseMessage = getHelpMessage(eventId, filteredMenu);
-      } else if (messageIntent.intent === INTENTS.QUEUE) {
-        const queuePosition = await getQueuePosition(customerEntry);
-        if (Number.isNaN(queuePosition)) {
-          responseMessage = getNoOpenOrderMessage();
-        } else {
-          responseMessage = getQueuePositionMessage(queuePosition);
-        }
-      } else if (messageIntent.intent === INTENTS.CANCEL) {
-        const cancelled = await cancelOrder(customerEntry);
-        if (cancelled) {
-          responseMessage = getCancelOrderMessage(cancelled.product, cancelled.orderNumber);
-        } else {
-          responseMessage = getNoOpenOrderMessage();
-        }
-      } else {
-        responseMessage = getWrongOrderMessage(req.body.Body, filteredMenu);
-      }
-      await sendMessage(customerEntry.key, responseMessage);
-      res.send();
+      const responseMessage = await getAIResponse(customerEntry.key, req.body.Body)
+      await sendMessage(customerEntry.key, { body: responseMessage })
+    } catch (error) {
+      await sendMessage(customerEntry.key, getOopsMessage(eventId))
+      console.log('ERROR: ', error)
+    }
+    return;
+  } else {
+    const messageIntent = determineIntent(req.body.Body, eventId);
+
+    if (messageIntent.intent === INTENTS.REGISTER) {
+      customerEntry = await setEventForCustomer(
+        customerEntry,
+        messageIntent.value
+      );
+      await sendMessage(customerEntry.key, { body: `Registered for ${messageIntent.value}` });
       return;
+    } else if (messageIntent.intent === INTENTS.UNREGISTER) {
+      customerEntry = await removeEventForCustomer(customerEntry);
+      await sendMessage(customerEntry.key, { body: `Unregistered from all events` });
+      return;
+    } else if (messageIntent.intent === INTENTS.GET_EVENT) {
+      await sendMessage(customerEntry.key, { body: `You are registered for: ${eventId}` });
+      return;
+    }
+
+    // Respond to HTTP request with empty Response object since we will use the REST API to respond to messages.
+    const twiml = new MessagingResponse();
+    res.type('text/xml').send(twiml.toString());
+
+    if (messageIntent.intent !== INTENTS.ORDER) {
+      const { fullMenu, availableMenu } = config(eventId);
+      const filteredMenu = fullMenu.filter(item => availableMenu[item.shortTitle]);
+      try {
+        let responseMessage;
+        if (messageIntent.intent === INTENTS.HELP || messageIntent.intent === INTENTS.WELCOME) {
+          responseMessage = getHelpMessage(eventId, filteredMenu);
+        } else if (messageIntent.intent === INTENTS.QUEUE) {
+          const { queuePosition } = await getOrderStatus(customerEntry, eventId);
+          if (Number.isNaN(queuePosition)) {
+            responseMessage = getNoOpenOrderMessage();
+          } else {
+            responseMessage = getQueuePositionMessage(queuePosition);
+          }
+        } else if (messageIntent.intent === INTENTS.CANCEL) {
+          const cancelled = await cancelOrder(customerEntry, eventId);
+          if (cancelled) {
+            responseMessage = getCancelOrderMessage(cancelled.product, cancelled.orderNumber);
+          } else {
+            responseMessage = getNoOpenOrderMessage();
+          }
+        } else {
+          responseMessage = getWrongOrderMessage(req.body.Body, filteredMenu);
+        }
+        await sendMessage(customerEntry.key, responseMessage);
+        res.send();
+        return;
+      } catch (err) {
+        req.log.error(err);
+        res.status(500).send();
+        return;
+      }
+    }
+    const coffeeOrder = messageIntent.value;
+
+    const { openOrders, completedOrders } = customerEntry.data;
+    if (completedOrders >= config(eventId).maxOrdersPerCustomer) {
+
+      try {
+        await sendMessage(customerEntry.key, getMaxOrdersMessage());
+        return;
+      } catch (err) {
+        req.log.error(err);
+        return;
+      }
+    }
+    if (Array.isArray(openOrders) && openOrders.length > 0) {
+      try {
+        const order = await orderQueueList(eventId)
+          .syncListItems(openOrders[0])
+          .fetch();
+
+        await sendMessage(customerEntry.key, getExistingOrderMessage(
+          order.data.product,
+          order.index
+        ));
+        return;
+      } catch (err) {
+        req.log.error(err);
+        return;
+      }
+    }
+
+    try {
+      const { orderNumber } = await placeOrder(customerEntry, eventId, {
+        menuItem: coffeeOrder, specialRequests: req.body.Body
+      })
+      await sendMessage(customerEntry.key, getOrderCreatedMessage(coffeeOrder, orderNumber, eventId));
+      res.send();
     } catch (err) {
       req.log.error(err);
       res.status(500).send();
-      return;
     }
-  }
-  const coffeeOrder = messageIntent.value;
-
-  const { openOrders, completedOrders } = customerEntry.data;
-  if (completedOrders >= config(eventId).maxOrdersPerCustomer) {
-
-    try {
-      await sendMessage(customerEntry.key, getMaxOrdersMessage());
-      return;
-    } catch (err) {
-      req.log.error(err);
-      return;
-    }
-  }
-  if (Array.isArray(openOrders) && openOrders.length > 0) {
-    try {
-      const order = await orderQueueList(eventId)
-        .syncListItems(openOrders[0])
-        .fetch();
-
-      await sendMessage(customerEntry.key, getExistingOrderMessage(
-        order.data.product,
-        order.index
-      ));
-      return;
-    } catch (err) {
-      req.log.error(err);
-      return;
-    }
-  }
-
-  try {
-    const orderEntry = await orderQueueList(eventId).syncListItems.create(
-      createOrderItem(customerEntry, coffeeOrder, req.body.Body)
-    );
-
-    customerEntry.data.openOrders.push(orderEntry.index);
-    await customersMap.syncMapItems(customerEntry.key).update({
-      data: customerEntry.data,
-    });
-
-
-    await allOrdersList(eventId).syncListItems.create({
-      data: {
-        product: coffeeOrder,
-        message: req.body.Body,
-        source: customerEntry.data.source,
-        countryCode: customerEntry.data.countryCode,
-      },
-    });
-
-    await sendMessage(customerEntry.key, getOrderCreatedMessage(coffeeOrder, orderEntry.index, eventId));
-    res.send();
-  } catch (err) {
-    req.log.error(err);
-    res.status(500).send();
   }
 }
 
 module.exports = {
-  handler: safe(handleIncomingMessages),
+  handler: safe(handleIncomingMessages)
 };
