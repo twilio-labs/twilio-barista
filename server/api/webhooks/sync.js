@@ -35,7 +35,7 @@ async function handleOrderStatusChange(requestBody) {
   });
 
   await sendMessage(customer.key, itemData.status === 'ready' ?
-    getOrderReadyMessage(itemData.product, itemIndex, eventId) :
+    getOrderReadyMessage(itemData.product, itemData.message, itemIndex, eventId) :
     getOrderCancelledMessage(itemData.product, itemIndex)
   );
 

@@ -422,5 +422,6 @@ async function handleIncomingMessages(req, res) {
 }
 
 module.exports = {
-  handler: safe(handleIncomingMessages)
+  messageHandler: safe(handleIncomingMessages),
+  orderHandler: safe(handleOrderAction)
 };

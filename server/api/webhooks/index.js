@@ -12,7 +12,9 @@ router.post(
   '/incoming',
   parseBody,
   parseCookies,
-  require('./incoming').handler
+  require('./incoming').messageHandler
 );
+router.get('/orders', bodyParser.json(), require('./incoming').orderHandler);
+router.post('/orders', bodyParser.json(), require('./incoming').orderHandler);
 
 module.exports = router;
