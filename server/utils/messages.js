@@ -57,10 +57,16 @@ function getOrderCancelledMessage(product, orderNumber) {
   }
 }
 
-function getOrderReadyMessage(product, orderNumber, forEvent) {
+function getOrderReadyMessage(product, specialRequests, orderNumber, forEvent) {
   const orderPickupLocation = config(forEvent).orderPickupLocation
+  let message;
+  if (specialRequests) {
+    message = `Your ${product} (${specialRequests}) is ready. You can skip the queue and collect it at ${orderPickupLocation} right away, ask for order number #${orderNumber}.`
+  } else {
+    message = `Your ${product} is ready. You can skip the queue and collect it at ${orderPickupLocation} right away, ask for order number #${orderNumber}.`
+  }
   return {
-    body: `Your ${product} is ready. You can skip the queue and collect it at ${orderPickupLocation} right away, ask for order number #${orderNumber}.`
+    body: message
   }
 }
 
