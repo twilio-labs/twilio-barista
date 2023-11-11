@@ -58,9 +58,9 @@ function getOrderCancelledMessage(product, orderNumber) {
 }
 
 function getOrderReadyMessage(product, specialRequests, orderNumber, forEvent) {
-  const orderPickupLocation = config(forEvent).orderPickupLocation
+  const {useAI, orderPickupLocation} = config(forEvent)
   let message;
-  if (specialRequests) {
+  if (specialRequests && useAI) {
     message = `Your ${product} (${specialRequests}) is ready. You can skip the queue and collect it at ${orderPickupLocation} right away, ask for order number #${orderNumber}.`
   } else {
     message = `Your ${product} is ready. You can skip the queue and collect it at ${orderPickupLocation} right away, ask for order number #${orderNumber}.`

@@ -145,6 +145,7 @@ const DEFAULT_CONFIGURATION = {
 
 const DEFAULT_EVENT_CONFIGURATION = {
   isOn: true,
+  useAI: false,
   isVisible: false,
   mode: "barista",
   offlineMessage: "We are sorry but there are currently no beverages.",

@@ -312,12 +312,12 @@ async function handleIncomingMessages(req, res) {
     return;
   }
 
-  // This is where split should happen to AI or not AI
   if (config(eventId).useAI) {
     try {
       const responseMessage = await getAIResponse(customerEntry.key, req.body.Body)
       await sendMessage(customerEntry.key, { body: responseMessage })
     } catch (error) {
+      // TODO: Could fall back to non-AI path here if AI fails
       await sendMessage(customerEntry.key, getOopsMessage(eventId))
       console.log('ERROR: ', error)
     }
