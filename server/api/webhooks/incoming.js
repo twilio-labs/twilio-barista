@@ -35,7 +35,7 @@ const { safe } = require('../../utils/async-requests.js');
 
 const {
   X_VERCEL_PROTECTION_BYPASS,
-  TWILIO_AI_ASSISTANT_ID
+  TWILIO_AI_ASSISTANT_ENDPOINT
 } = process.env;
 
 function createOrderItem(customer, coffeeOrder, originalMessage) {
@@ -149,7 +149,6 @@ function determineIntent(message, forEvent) {
   };
 }
 
-// TODO: Not currently possible to use as AI assistant tool w/ a DELETE
 async function getOrderStatus(customer, eventId) {
   const orderNumber = customer.data.openOrders[0];
   if (!orderNumber) {
@@ -208,14 +207,12 @@ async function placeOrder(customer, eventId, order) {
 }
 
 async function getAIResponse(sessionId, message) {
-  const response = await fetch(`https://hack-assistant.twilionext.com/api/${TWILIO_AI_ASSISTANT_ID}/webhooks/rest`, {
+  const response = await fetch(TWILIO_AI_ASSISTANT_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify({
         Identity: 'NONE',
         SessionId: sessionId,
-        // SessionId: customerEntry.key,
         Body: message
-        // Body: req.body.Body
     }),
     headers: {
       'content-type': 'application/json',
