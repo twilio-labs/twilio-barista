@@ -318,10 +318,12 @@ async function handleIncomingMessages(req, res) {
     try {
       const responseMessage = await getAIResponse(customerEntry.key, req.body.Body)
       await sendMessage(customerEntry.key, { body: responseMessage })
+      res.send();
     } catch (error) {
       // TODO: Could fall back to non-AI path here if AI fails
       await sendMessage(customerEntry.key, getOopsMessage(eventId))
-      console.log('ERROR: ', error)
+      req.log.error(err);
+      res.status(500).send();
     }
     return;
   } else {
