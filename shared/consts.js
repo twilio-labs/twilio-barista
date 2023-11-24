@@ -75,6 +75,14 @@ const AVAILABLE_BARISTA_OPTIONS = [
     title: "Mocha",
     description: "Whisked powdered green tea"
   }, {
+    shortTitle: "Black Tea",
+    title: "Black Tea",
+    description: "Robust, bold, energizing, classic, versatile, comforting"
+  }, {
+    shortTitle: "Herbal Tea",
+    title: "Herbal Tea",
+    description: "Classic, diverse, hot beverage infused with leaves"
+  }, {
     shortTitle: "Chai",
     title: "Chai",
     description: "Spiced tea with milk"

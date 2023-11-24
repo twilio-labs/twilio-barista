@@ -27,7 +27,7 @@ function getHelpPrivacyTemplate(numOptions, templateName) {
       "twilio/list-picker": {
         body,
         items,
-        "button": "Show Ingredients"
+        "button": "More Details"
       },
       "twilio/text": {
         "body": body
@@ -66,7 +66,7 @@ function getWrongOrderTemplate(numOptions, templateName) {
       "twilio/list-picker": {
         body,
         items,
-        "button": "Show Ingredients"
+        "button": "More Details"
       },
       "twilio/text": {
         "body": body
@@ -105,7 +105,7 @@ function getPostRegistrationTemplate(numOptions, templateName) {
       "twilio/list-picker": {
         body,
         items,
-        "button": "Show Ingredients"
+        "button": "More Details"
       },
       "twilio/text": {
         "body": body
