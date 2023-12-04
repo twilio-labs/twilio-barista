@@ -1,5 +1,8 @@
 const { MessagingResponse } = require('twilio').twiml;
 const moment = require('moment');
+const countriesList = require("countries-list")
+const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
+
 
 const { determineCoffeeFromMessage } = require('../../data/coffee-options');
 const { config } = require('../../data/config');
@@ -21,32 +24,13 @@ const {
   orderQueueList,
   allOrdersList,
   sendMessage,
-  // registerAddress,
-  // registerOpenOrder,
-  // registerTagForBinding,
-  // removeTagForBinding,
 } = require('../twilio');
 const {
   INTENTS,
-  CUSTOMER_STATES,
-  COOKIES,
-  TAGS,
 } = require('../../../shared/consts');
 
 const { safe } = require('../../utils/async-requests.js');
 
-
-function getCustomerInformation({ From, Body, To, FromCountry, Source }) { //TODO Adapter
-  return {
-    // address: From,
-    openOrders: [],
-    completedOrders: 0,
-    countryCode: FromCountry || 'unknown',
-    contact: To,
-    source,
-    eventId: null,
-  };
-}
 
 function createOrderItem(customer, coffeeOrder, originalMessage) {
   return {
@@ -60,18 +44,21 @@ function createOrderItem(customer, coffeeOrder, originalMessage) {
   };
 }
 
-async function findOrCreateCustomer(customer) { //TODO adapt
+async function findOrCreateCustomer({ Author, Source, ConversationSid, MessagingServiceSid }) {
   let customerEntry;
   try {
-    customerEntry = await customersMap.syncMapItems(customer.ConversationSid).fetch();
+    customerEntry = await customersMap.syncMapItems(ConversationSid).fetch();
   } catch (err) {
+    const number = phoneUtil.parseAndKeepRawInput(Author.replace("whatsapp:", ""));
+    const country = Object.values(countriesList.countries).find(country => country.phone === `${number.getCountryCode()}`)
     customerEntry = await customersMap.syncMapItems.create({
-      key: customer.ConversationSid,
+      key: ConversationSid,
       data: {
         openOrders: [],
         completedOrders: 0,
-        countryCode: 'unknown', //TODO remove if not needed or parse from country code
-        source: customer.Source,
+        contact: MessagingServiceSid,
+        countryCode: country.name || 'unknown',
+        source: Source,
         eventId: null,
       },
     });
@@ -83,16 +70,7 @@ async function setEventForCustomer(customerEntry, eventId) {
   const eventExpiryDate = moment()
     .add(5, 'days')
     .valueOf();
-  // let bindingSid = await removeTagsForBindingWithPrefix(
-  //   customerEntry.data.bindingSid,
-  //   TAGS.PREFIX_EVENT
-  // );
-  // const bindingSid = await registerTagForBinding(
-  //   customerEntry.data.bindingSid,
-  //   TAGS.PREFIX_EVENT + eventId
-  // );
   const data = Object.assign({}, customerEntry.data, {
-    // bindingSid,
     eventId,
     eventExpiryDate,
   });
@@ -101,21 +79,10 @@ async function setEventForCustomer(customerEntry, eventId) {
 
 async function removeEventForCustomer(customerEntry) {
   const data = Object.assign({}, customerEntry.data);
-  // data.bindingSid = await removeTagForBinding( //TODO how to handle multiple events then?
-  //   data.bindingSid,
-  //   TAGS.PREFIX_EVENT + data.eventId
-  // );
   data.eventId = undefined;
   data.eventExpiryDate = undefined;
   return customerEntry.update({ data });
 }
-
-// async function updateBindingSidForCustomer(customerEntry, bindingSid) {
-//   const data = Object.assign({}, customerEntry.data, {
-//     bindingSid,
-//   });
-//   return customerEntry.update({ data });
-// }
 
 function determineIntent(message, forEvent) {
   const msgNormalized = message.toLowerCase().trim();
@@ -204,7 +171,7 @@ async function cancelOrder(customer) {
     return false;
   }
   const orderNumber = customerEntry.data.openOrders[0];
-  if (!orderNumber) {
+  if (orderNumber === undefined) {
     return false;
   }
   const orderedItemLink = orderQueueList(customer.data.eventId)
@@ -229,39 +196,29 @@ async function cancelOrder(customer) {
  * @returns
  */
 async function handleIncomingMessages(req, res) {
-  // const customer = getCustomerInformation(req.body);
-  // customer.identity = getIdentityFromAddress(req.body.From);
   let customerEntry = await findOrCreateCustomer(req.body);
-  // if (!customerEntry.data.bindingSid) {
-  //   const { sid } = await registerAddress(req.body.From, customer.source);
-  //   customerEntry = await updateBindingSidForCustomer(customerEntry, sid);
-  //   customer.bindingSid = sid;
-  // }
 
   if (
     !customerEntry.data.eventId ||
     customerEntry.data.eventExpiryDate < Date.now()
   ) {
-    if (req.cookies[COOKIES.CUSTOMER_STATE] !== CUSTOMER_STATES.SET) {
-      const { events } = config();
-      const choices = Object.values(events)
-        .filter(x => {
-          return x.isVisible;
-        })
-        .map(x => x.eventName)
-        .map((name, idx) => `${idx + 1}: ${name}`);
-      const choiceToEventId = Object.keys(events).filter(
-        x => events[x].isVisible
-      );
+    const { events } = config();
+    const choices = Object.values(events)
+      .filter(x => {
+        return x.isVisible;
+      })
+      .map(x => x.eventName)
+      .map((name, idx) => `${idx + 1}: ${name}`);
+    const choiceToEventId = Object.keys(events).filter(
+      x => events[x].isVisible
+    );
+    if (isNaN(+req.body.Body)) {
       if (choiceToEventId.length === 0) {
-        res.type('text/plain').send(getNoActiveEventsMessage());
+        await sendMessage(customerEntry.key, getNoActiveEventsMessage());
         return;
       } else if (choiceToEventId.length > 1) {
         const message = getEventRegistrationMessage(choices);
-        res.cookie(COOKIES.CUSTOMER_STATE, CUSTOMER_STATES.SET);
-        res.cookie(COOKIES.EVENT_MAPPING, choiceToEventId.join(','));
-        res.cookie(COOKIES.ORIGINAL_MESSAGE, req.body.Body);
-        res.type('text/plain').send(message);
+        await sendMessage(customerEntry.key, message);
         return;
       }
       const autoChosenEventId = choiceToEventId[0];
@@ -271,24 +228,13 @@ async function handleIncomingMessages(req, res) {
       );
     } else {
       res.type('text/plain');
-      const eventChoices = req.cookies[COOKIES.EVENT_MAPPING].split(',');
       const choice = parseInt(req.body.Body.trim(), 10);
-      if (isNaN(choice)) {
-        res.send('🙁 Please send only the number of the respective event.');
-        return;
-      }
-      const chosenEventId = eventChoices[choice - 1];
+      const chosenEventId = choiceToEventId[choice - 1];
       if (!chosenEventId) {
-        res.send(
-          '🤷‍♀️ You chose an invalid number for the event. 🤷‍♂️ Please try again.'
-        );
-        return;
+        return await sendMessage(customerEntry.key, { body: '🤷‍♀️ You chose an invalid number for the event. 🤷‍♂️ Please try again.' });
       }
       customerEntry = await setEventForCustomer(customerEntry, chosenEventId);
-      req.body.Body = req.cookies[COOKIES.ORIGINAL_MESSAGE];
-      res.clearCookie(COOKIES.CUSTOMER_STATE);
-      res.clearCookie(COOKIES.EVENT_MAPPING);
-      res.clearCookie(COOKIES.ORIGINAL_MESSAGE);
+      return await sendMessage(customerEntry.key, { body: 'The event has been set 🙂. What would you like to order?' });
     }
   }
 
@@ -300,19 +246,19 @@ async function handleIncomingMessages(req, res) {
       customerEntry,
       messageIntent.value
     );
-    res.type('text/plain').send(`Registered for ${messageIntent.value}`);
+    await sendMessage(customerEntry.key, { body: `Registered for ${messageIntent.value}` });
     return;
   } else if (messageIntent.intent === INTENTS.UNREGISTER) {
     customerEntry = await removeEventForCustomer(customerEntry);
-    res.type('text/plain').send(`Unregistered from all events`);
+    await sendMessage(customerEntry.key, { body: `Unregistered from all events` });
     return;
   } else if (messageIntent.intent === INTENTS.GET_EVENT) {
-    res.type('text/plain').send(`You are registered for: ${eventId}`);
+    await sendMessage(customerEntry.key, { body: `You are registered for: ${eventId}` });
     return;
   }
 
   if (!config(eventId).isOn) {
-    res.type('text/plain').send(getSystemOfflineMessage(eventId));
+    await sendMessage(customerEntry.key, getSystemOfflineMessage(eventId));
     return;
   }
   // Respond to HTTP request with empty Response object since we will use the REST API to respond to messages.
@@ -320,14 +266,12 @@ async function handleIncomingMessages(req, res) {
   res.type('text/xml').send(twiml.toString());
 
   if (messageIntent.intent !== INTENTS.ORDER) {
-    const availableOptionsMap = config(eventId).availableCoffees;
-    const availableOptions = Object.keys(availableOptionsMap).filter(
-      key => availableOptionsMap[key]
-    );
+    const { fullMenu, availableMenu } = config(eventId);
+    const filteredMenu = fullMenu.filter(item => availableMenu[item.shortTitle]);
     try {
       let responseMessage;
       if (messageIntent.intent === INTENTS.HELP || messageIntent.intent === INTENTS.WELCOME) {
-        responseMessage = getHelpMessage(availableOptions);
+        responseMessage = getHelpMessage(eventId, filteredMenu);
       } else if (messageIntent.intent === INTENTS.QUEUE) {
         const queuePosition = await getQueuePosition(customerEntry);
         if (Number.isNaN(queuePosition)) {
@@ -343,7 +287,7 @@ async function handleIncomingMessages(req, res) {
           responseMessage = getNoOpenOrderMessage();
         }
       } else {
-        responseMessage = getWrongOrderMessage(req.body.Body, availableOptions);
+        responseMessage = getWrongOrderMessage(req.body.Body, filteredMenu);
       }
       await sendMessage(customerEntry.key, responseMessage);
       res.send();
@@ -394,22 +338,15 @@ async function handleIncomingMessages(req, res) {
       data: customerEntry.data,
     });
 
+
     await allOrdersList(eventId).syncListItems.create({
       data: {
         product: coffeeOrder,
         message: req.body.Body,
         source: customerEntry.data.source,
-        countryCode: customerEntry.countryCode,
+        countryCode: customerEntry.data.countryCode,
       },
     });
-
-    // const newBindingSid = await registerOpenOrder(
-    //   customerEntry.data.bindingSid
-    // );
-    // customerEntry = await updateBindingSidForCustomer(
-    //   customerEntry,
-    //   newBindingSid
-    // );
 
     await sendMessage(customerEntry.key, getOrderCreatedMessage(coffeeOrder, orderEntry.index, eventId));
     res.send();

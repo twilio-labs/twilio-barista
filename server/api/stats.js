@@ -5,10 +5,10 @@ function safelyIncrement(item) {
   return (item || 0) + 1;
 }
 
-function getAvailableProducts(availableCoffees) {
+function getAvailableProducts(availableMenu) {
   const products = {};
-  Object.keys(availableCoffees)
-    .filter(c => availableCoffees[c])
+  Object.keys(availableMenu)
+    .filter(c => availableMenu[c])
     .forEach(c => {
       products[c] = 0;
     });
@@ -18,16 +18,16 @@ function getAvailableProducts(availableCoffees) {
 async function fetchStats(eventId) {
   const {
     expectedOrders,
-    availableCoffees,
+    availableMenu,
     visibleNumbers,
     repoUrl,
     mode,
   } = config(eventId);
   const phoneNumbers = visibleNumbers
-    .split(',')
+    .split(',') 
     .map(n => n.trim())
     .slice(0, 2);
-  const product = getAvailableProducts(availableCoffees);
+  const product = getAvailableProducts(availableMenu);
   const allOrders = await allOrdersList(eventId).syncListItems.list();
   const stats = allOrders.map(order => order.data).reduce(
     (currentStats, order) => {

@@ -28,8 +28,8 @@ type GlobalConfigurationData = {
   mode: 'barista' | 'bartender' | 'smoothie';
   visibleNumbers: string[];
   offlineMessage: string;
-  availableCoffees: {
-    SomeCoffee: boolean;
+  availableMenu: {
+    SomeBeverage: boolean;
   };
   menuDetails: string;
   orderPickupLocation: string;

@@ -9,6 +9,7 @@ export default class Configurator extends Component {
   render() {
     const { config } = this.props;
     const entries = Object.keys(config)
+      .filter(key => key !== "mode" && key !== "fullMenu") // hide these props in the UI
       .sort((a, b) => this.sortConfig(config, a, b))
       .map(configName => {
         const value = config[configName];
@@ -16,6 +17,8 @@ export default class Configurator extends Component {
           return this.createBooleanInput(configName, value);
         } else if (Array.isArray(value)) {
           return this.createArrayInput(configName, value);
+        } else if (typeof value === 'object' && configName === "availableMenu") {
+          return this.createMenuToggle(configName, value);
         } else if (typeof value === 'object') {
           return this.createJsonInput(configName, value);
         } else {
@@ -139,6 +142,40 @@ export default class Configurator extends Component {
             </Button>
           )}
         </div>
+      </div>
+    );
+  }
+
+  createMenuToggle(key, value) {
+    const keys = Object.keys(value);
+    const entries = keys.map((objectKey, idx) => {
+      const objectValue = value[objectKey];
+      return (
+        <div class={style.jsonEntry}>
+          <Button
+            class={style.deleteButton}
+            colored
+            accent
+            onClick={() => this.deleteJsonEntry(key, value, objectKey)}
+          >
+            &times;
+          </Button>
+          <span class={style.jsonHeadline}>{objectKey}</span>
+          <span class={style.jsonSpacer}>:</span>
+          <Switch
+            class={style.jsonSwitch}
+            checked={objectValue}
+            onChange={evt =>
+              this.handleJsonValueChange(key, value, objectKey, evt)
+            }
+          />
+        </div>
+      );
+    });
+    return (
+      <div class={style.configEntry}>
+        <h6 class={style.jsonHeadline}>{key}</h6>
+        <div class={style.jsonList}>{entries}</div>
       </div>
     );
   }

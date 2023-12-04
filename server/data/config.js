@@ -93,11 +93,11 @@ function unsetAllEventConfigs() {
   eventConfigMap.clear();
 }
 
-async function createEventConfig(eventName) {
+async function createEventConfig(eventName, mode) {
   const customData = {
     visibleNumbers: internalGlobalConfig.connectedPhoneNumbers,
   };
-  const { data } = await createEventConfiguration(eventName, customData);
+  const { data } = await createEventConfiguration(eventName,mode, customData);
   setEventConfig(data);
   return data;
 }

@@ -12,7 +12,7 @@ function sortByLengthDesc(a, b) {
  */
 function determineCoffeeFromMessage(messageBody, forEvent) {
   const possibleOptions = config(forEvent).spellingMap;
-  const availableOptions = config(forEvent).availableCoffees;
+  const availableOptions = config(forEvent).availableMenu;
   const message = messageBody.trim().toLowerCase();
 
   // add availableOptions to possibleOptions to avoid missing entries:

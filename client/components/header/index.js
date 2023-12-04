@@ -16,7 +16,7 @@ export default class Header extends Component {
     //   </Link>;
     return (
       <header class={style.header}>
-        <h1>Twilio Barista</h1>
+        <h1>Twilio Bar</h1>
         <nav>
           <Link activeClassName={style.active} href="/">
             Home

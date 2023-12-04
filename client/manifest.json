@@ -1,6 +1,6 @@
 {
-  "name": "Twilio Barista",
-  "short_name": "Barista",
+  "name": "Twilio Bar",
+  "short_name": "Bar",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",

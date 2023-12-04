@@ -33,7 +33,7 @@ export default class Messenger extends Component {
     if (identity) {
       data.identity = identity.value;
     }
-    fetch('/api/admin/notification', {
+    fetch('/api/admin/message', {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
@@ -108,27 +108,9 @@ export default class Messenger extends Component {
                 >
                   Active Orders For Event
                 </Radio>
-                <Radio
-                  name="sendTo"
-                  value="individual"
-                  checked={this.state.sendTo === 'individual'}
-                  onChange={evt => this.handleInputChange(evt)}
-                >
-                  Individual
-                </Radio>
+            
               </div>
-              {this.state.sendTo === 'individual' && (
-                <div>
-                  <TextField
-                    name="identity"
-                    float-label
-                    value={this.state.identity}
-                    onChange={evt => this.handleInputChange(evt)}
-                  >
-                    Identity of individual...
-                  </TextField>
-                </div>
-              )}
+            
               {this.state.sendTo.indexOf('ForEvent') !== -1 &&
                 this.renderSelector()}
               <div>

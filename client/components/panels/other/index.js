@@ -127,7 +127,7 @@ export default class Other extends Component {
             action={() => this.setupApplication()}
           >
             This will create the necessary sync objects and other things
-            necessary for the first setup.
+            necessary for the first setup, such as overriding the callback URL of the sync service.
           </ActionCard>
           {/* <ActionCard
             title="Cancel All Open Orders"

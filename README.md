@@ -62,14 +62,18 @@ Retrieve your Twilio Account SID from the [Twilio Console].
 
 Go into the [Twilio Console] and [generate an API Key and Secret](https://www.twilio.com/console/dev-tools/api-keys). Make sure to store the information safely.
 
-#### 2. Create a Messaging Service
-
-Create a [Messaging Service in the Twilio Console](https://www.twilio.com/console/sms/services) and store the SID.
-
 #### 3. Create a Conversations Service
 
-Create a [Conversations Service in the Twilio Console](https://www.twilio.com/console/conversations/services) and choose your created Messaging Service as a Messaging Service. Make sure to store the SID.
-TODO append
+Create a [Conversations Service in the Twilio Console](https://www.twilio.com/console/conversations/services) and save the service SID for step 2.
+In the Messaging Service, the [**Handle Inbound Messages with Conversations**](https://www.twilio.com/docs/conversations/inbound-autocreation#:~:text=Enabling%20Autocreation%20through%20the%20Twilio%20Console&text=First%2C%20in%20the%20Messaging%20Service,Conversation%20option%20should%20be%20selected.) option should be toggled to Unlocked.
+
+#### 3. Create a Messaging Service
+
+Create a [Messaging Service in the Twilio Console](https://www.twilio.com/console/sms/services) and save the service SID for step 2. 
+
+Further, make sure that the "Integration" section has the option [**Autocreate a Conversation**](https://www.twilio.com/docs/conversations/inbound-autocreation#:~:text=Enabling%20Autocreation%20through%20the%20Twilio%20Console&text=First%2C%20in%20the%20Messaging%20Service,Conversation%20option%20should%20be%20selected) selected.
+
+
 
 #### 4. Create a Sync Service
 

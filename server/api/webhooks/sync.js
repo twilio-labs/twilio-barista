@@ -4,7 +4,6 @@ const {
   orderQueueList,
   restClient,
   sendMessage,
-  // deregisterOpenOrder,
 } = require('../twilio');
 
 const {
@@ -43,11 +42,6 @@ async function handleOrderStatusChange(requestBody) {
   await orderQueueList(eventId)
     .syncListItems(itemIndex)
     .remove();
-  // const newBindingSid = await deregisterOpenOrder(customer.data.bindingSid);
-  // const newCustomerData = Object.assign({}, customer.data, {
-  //   bindingSid: newBindingSid,
-  // });
-  // await customer.update({ data: newCustomerData });
 }
 
 function validEventType(eventType) {

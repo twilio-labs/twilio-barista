@@ -7,9 +7,11 @@ const CreateEventForm = ({ onNewEvent }) => {
   function onSubmit(evt) {
     evt.preventDefault();
     const eventNameInput = evt.target.eventName;
-    const eventName = eventNameInput.value;
+    const modeInput = evt.target.mode;
+
+    onNewEvent(eventNameInput.value, modeInput.value);
     eventNameInput.value = '';
-    onNewEvent(eventName);
+    modeInput.value = '';
   }
 
   return (
@@ -23,6 +25,13 @@ const CreateEventForm = ({ onNewEvent }) => {
         label="Event Name"
         type="text"
         name="eventName"
+        value=""
+        class={style.eventFormNameInput}
+      /> <TextField
+        floating-label={true}
+        label="Event Mode"
+        type="text"
+        name="mode"
         value=""
         class={style.eventFormNameInput}
       />

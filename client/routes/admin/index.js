@@ -52,7 +52,7 @@ export default class Orders extends Component {
           </Tabs.Tab>
           <Tabs.Tab href="#events">Events</Tabs.Tab>
           <Tabs.Tab href="#metrics">Metrics</Tabs.Tab>
-          {/* <Tabs.Tab href="#messages">Messages</Tabs.Tab> */}
+          <Tabs.Tab href="#messages">Messages</Tabs.Tab>
           <Tabs.Tab href="#other">Other</Tabs.Tab>
         </Tabs.TabBar>
         <Tabs.TabPanel id="configuration" active>
@@ -180,12 +180,12 @@ export default class Orders extends Component {
     }
   }
 
-  async createEvent(eventName) {
+  async createEvent(eventName, mode) {
     try {
       const resp = await fetch('/api/admin/events', {
         method: 'POST',
         credentials: 'include',
-        body: JSON.stringify({ eventName }),
+        body: JSON.stringify({ eventName, mode }),
         headers: {
           'Content-Type': 'application/json',
         },

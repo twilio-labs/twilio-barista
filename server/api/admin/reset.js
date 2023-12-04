@@ -10,9 +10,8 @@ const {
   customersMap,
   configurationDoc,
   resetMap,
-  loadConnectedPhoneNumbers,
   resetAllLists,
-  // deregisterOpenOrder,
+  resetConversations,
   removeAllEventConfigDocs,
   restClient,
 } = require('../twilio');
@@ -32,9 +31,7 @@ async function cancelOpenOrders(eventId) {
     const orderNumber = order.index;
     await sendMessage(customerId, getOrderCancelledMessage(product, orderNumber));
     const { data } = await customersMap.syncMapItems(customerId).fetch();
-    // const newBindingSid = await deregisterOpenOrder(data.bindingSid);
     data.openOrders = [];
-    // data.bindingSid = newBindingSid;
     return customersMap.syncMapItems(customerId).update({ data });
   });
   await Promise.all(closeAllOpenOrders);
@@ -70,10 +67,9 @@ async function resetApplication() {
   await removeAllEventConfigDocs();
   unsetAllEventConfigs();
   await configurationDoc.update({ data: DEFAULT_CONFIGURATION });
-  const connectedPhoneNumbers = await loadConnectedPhoneNumbers();
-  await updateGlobalConfigEntry('connectedPhoneNumbers', connectedPhoneNumbers);
+  await updateGlobalConfigEntry('connectedPhoneNumbers', []);
   await resetMap(SYNC_NAMES.CUSTOMERS);
-  // await resetNotify(); TODO maybe reset conversations
+  await resetConversations(); 
   await deleteAllMessages();
   await setPermissions();
   return Promise.resolve();

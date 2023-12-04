@@ -12,10 +12,10 @@ router.get('/numbers', numbers.get);
 router.get('/events', events.get);
 router.get('/metrics/:eventId', metrics.get);
 router.post(
-  '/notification',
+  '/message',
   gateForAdmin,
   parseJsonBody,
-  require('./notification').handler
+  require('./message').handler
 );
 
 // router.post('/numbers', gateForAdmin, parseJsonBody, numbers.post);

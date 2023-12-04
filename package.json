@@ -29,8 +29,7 @@
     "dev": "stmux -w always -m beep,system -- [ [ \"npm run dev:preact\" ] : [ \"npm run dev:api\" ] ]",
     "dev:preact": "PORT=8080 preact watch --src client --template client/index.html",
     "dev:api": "nodemon --watch shared --watch server --exec \"npm run start:dev\"",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "snyk-protect": "snyk protect"
   },
   "devDependencies": {
     "all-contributors-cli": "^5.10.2",
@@ -63,12 +62,14 @@
     "classnames": "^2.2.5",
     "common-tags": "^1.7.2",
     "cookie-parser": "^1.4.3",
+    "countries-list": "^2.6.1",
     "dompurify": "^0.9.0",
     "emoji-flags": "^1.2.0",
     "event-emitter": "^0.3.5",
     "express": "^4.16.4",
     "express-pino-logger": "^2.0.0",
     "flat": "^4.1.0",
+    "google-libphonenumber": "^3.2.33",
     "if-env": "^1.0.0",
     "lodash.kebabcase": "^4.1.1",
     "lodash.template": "^4.4.0",

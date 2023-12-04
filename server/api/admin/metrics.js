@@ -52,11 +52,11 @@ async function handleRetrievingStats(req, res) {
   const customerMessages = messages.filter(
     ({ from }) => !connectedPhoneNumbers.includes(from)
   );
-  const uniqueCustomers = uniqBy(customerMessages, 'from');
+  const uniqueSenders = uniqBy(customerMessages, 'from');
 
   stats.totalMessages = messages.length;
   stats.incomingMessages = customerMessages.length;
-  stats.totalUniqueContacts = uniqueCustomers.length;
+  stats.totalUniqueSenders = uniqueSenders.length;
   stats.totalCustomers = customersForEvent.length;
 
   const finalStats = flat(stats);

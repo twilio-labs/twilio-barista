@@ -16,24 +16,17 @@ const {
 const { SYNC_NAMES } = require('../../../shared/consts');
 
 async function handleCreateEventRequest(req, res, next) {
-  const { eventName } = req.body;
-  const data = await createEventConfig(eventName);
+  const { eventName, mode } = req.body;
+  const data = await createEventConfig(eventName, mode);
   const eventId = data.slug;
   await createOrderQueue(eventId);
   await createAllOrdersList(eventId);
   res.send({ eventId });
 }
 
-async function deleteAllBindingsAndCustomersForEvent(eventId) { //TODO need to check what;s needed
-  // function deleteBinding(bindingSid) {
-  //   return notifyClient
-  //     .bindings(bindingSid)
-  //     .remove()
-  //     .catch(err => true);
-  // }
-
+async function deleteAllCustomersForEvent(eventId) {
   function deleteCustomer(customer) {
-    return customer.remove().catch(err => true);
+    return customer.remove();
   }
 
   const throttle = new PromiseThrottle({
@@ -44,14 +37,11 @@ async function deleteAllBindingsAndCustomersForEvent(eventId) { //TODO need to c
     ({ data }) => data.eventId === eventId
   );
 
-  // const promisesDeleteBindings = customers.map(({ data }) => {
-  //   return throttle.add(deleteBinding.bind(this, data.bindingSid));
-  // });
   const promisesDeleteCustomers = customers.map(customer => {
     return throttle.add(deleteCustomer.bind(this, customer));
   });
 
-  return Promise.all([...promisesDeleteBindings, ...promisesDeleteCustomers]);
+  return Promise.all(promisesDeleteCustomers);
 }
 
 async function handleDeleteEventRequest(req, res, next) {
@@ -63,7 +53,7 @@ async function handleDeleteEventRequest(req, res, next) {
   await deleteEventConfig(eventId);
   await allOrdersList(eventId).remove();
   await orderQueueList(eventId).remove();
-  await deleteAllBindingsAndCustomersForEvent(eventId);
+  await deleteAllCustomersForEvent(eventId);
   res.send({ message: 'Event deleted' });
 }
 

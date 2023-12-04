@@ -4,7 +4,7 @@ const emojiFlags = require('emoji-flags');
 
 async function handler(req, res) {
   const { eventId } = req.query;
-  const { visibleNumbers, mode, availableCoffees, menuDetails } = config(eventId);
+  const { visibleNumbers, mode, availableMenu, menuDetails } = config(eventId);
   const filteredNumbers = visibleNumbers.split(',').map(num => num.trim());
 
   try {
@@ -26,7 +26,7 @@ async function handler(req, res) {
         }
       })
     )).filter(x => !!x);
-    const menuItems = Object.keys(availableCoffees);
+    const menuItems = Object.keys(availableMenu);
     res.send({
       phoneNumbers,
       eventType: mode,
